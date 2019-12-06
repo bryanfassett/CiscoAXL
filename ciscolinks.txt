@@ -1,0 +1,6 @@
+https://developer.cisco.com/docs/axl-schema-reference/
+https://github.com/CiscoDevNet/axl-python-zeep-samples
+
+run sql UPDATE regionmatrix SET videobandwidth = 384, fkcodeclist = '22910f2b-51ab-4a46-b606-604a28558568', audiobandwidth = 64 WHERE fkregion_a = 'd8519da3-5f68-6dba-cb2c-455c53e86519' AND fkregion_b = '41a2196b-fefd-3c3e-9986-6c41613e24ce'
+
+run sql INSERT INTO regionmatrix (fkregion_a, fkregion_b, videobandwidth, fkcodeclist, immersivebandwidth, audiobandwidth) VALUES ('d8519da3-5f68-6dba-cb2c-455c53e86519', '1b1b9eb1-7803-11d3-bdf0-00108302ead1', 384, '22910f2b-51ab-4a46-b606-604a28558568', -2, 64)
