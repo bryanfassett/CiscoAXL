@@ -56,4 +56,4 @@ try:
     print('Location created successfully')
 
 except Fault as err:
-    print(f'Error Inserting Region: {err}')
+    print(f'Error Inserting Location: {err}')
