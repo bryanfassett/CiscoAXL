@@ -11,7 +11,9 @@ disable_warnings(InsecureRequestWarning) # Disable warning output due to invalid
 client, service, history = open_connection() # Open connection using connect.py
 
 def add_staged_regions():
-    # Region Name:  Region uuid
+    # Create Blank Region Dictionary
+    region_matrix = {}
+    # Create initial hardcoded Regions List to test with
     region_list = ['CLX_R','SBC_CLx_R','BROADCAST_CLx_R']
 
     # Create the new regions from hardcoded region list
@@ -23,13 +25,6 @@ def add_staged_regions():
         region_uuid = region_uuid.strip("{}").lower()
         print(f"New region uuid: {region_uuid}")
         region_matrix.update({region_name:region_uuid})
-
-def update_region_matrix
-# Create a Dictionary of all regions to create a relationship with the new region
-region_matrix = {}
-# Region Name: Region uuid
-
-
 
     print('Regions successfully created.')
 except Fault as err:
