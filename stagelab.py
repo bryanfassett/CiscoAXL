@@ -10,7 +10,7 @@ from urllib3.exceptions import InsecureRequestWarning
 disable_warnings(InsecureRequestWarning) # Disable warning output due to invalid certificate
 client, service, history = open_connection() # Open connection using connect.py
 
-def add_staged_regions():
+def stage_regions():
     # Create Blank Region Dictionary
     region_matrix = {}
     # Create initial hardcoded Regions List to test with
@@ -25,7 +25,3 @@ def add_staged_regions():
         region_uuid = region_uuid.strip("{}").lower()
         print(f"New region uuid: {region_uuid}")
         region_matrix.update({region_name:region_uuid})
-
-    print('Regions successfully created.')
-except Fault as err:
-    print(f'Error Inserting Region: {err}')
