@@ -4,13 +4,14 @@ from zeep.exceptions import Fault
 from zeep.plugins import HistoryPlugin
 from urllib3 import disable_warnings
 from urllib3.exceptions import InsecureRequestWarning
+from stagelab.py import add_staged_regions, update_region_matrix
 
 # Create a Dictionary of all regions to create a relationship with the new region
 region_matrix = {
     # Region Name:  Region uuid
-    'CLx_R': 'e80815d6-da74-033c-6294-d6fce4fc7da9',
-    'SBC_CLx_R':'138bb056-38bf-956a-7a54-e1d122521e6a',
-    'BROADCAST_CLx_R': '09835766-1838-9229-faff-bdda583af704'
+    'CLx_R': '3a2eb8c1-7f22-dd9e-dfee-ff6179034c57',
+    'SBC_CLx_R':'648e7571-a570-59ae-305c-ca3f1ab73776',
+    'BROADCAST_CLx_R': 'e6efbe6c-5038-1ab8-a3ff-8f18188612d9'
 }
 
 disable_warnings(InsecureRequestWarning) # Disable warning output due to invalid certificate

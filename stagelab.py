@@ -20,17 +20,15 @@ def add_staged_regions():
         resp = service.addRegion(region={"name": region_name})
         # Store the returned uuids for later
         region_uuid = resp['return']
-    region_uuid = region_uuid.strip("{}").lower()
-    print(f"New region uuid: {region_uuid}")
+        region_uuid = region_uuid.strip("{}").lower()
+        print(f"New region uuid: {region_uuid}")
+        region_matrix.update({region_name:region_uuid})
 
 def update_region_matrix
 # Create a Dictionary of all regions to create a relationship with the new region
-region_matrix = {
-    # Region Name:  Region uuid
-    'CLx_R': '3a2eb8c1-7f22-dd9e-dfee-ff6179034c57',
-    'SBC_CLx_R':'648e7571-a570-59ae-305c-ca3f1ab73776',
-    'BROADCAST_CLx_R': 'e6efbe6c-5038-1ab8-a3ff-8f18188612d9'
-}
+region_matrix = {}
+# Region Name: Region uuid
+
 
 
     print('Regions successfully created.')
