@@ -4,7 +4,7 @@ from zeep.exceptions import Fault
 from zeep.plugins import HistoryPlugin
 from urllib3 import disable_warnings
 from urllib3.exceptions import InsecureRequestWarning
-from stagelab import stage_regions
+from stagelab import region_matrix
 
 # Create a Dictionary of all regions to create a relationship with the new region
 #region_matrix = {
