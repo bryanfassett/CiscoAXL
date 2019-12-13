@@ -5,8 +5,6 @@ from zeep.plugins import HistoryPlugin
 from urllib3 import disable_warnings
 from urllib3.exceptions import InsecureRequestWarning
 
-disable_warnings(InsecureRequestWarning) # Disable warning output due to invalid certificate
-
 #staging.py
 # from region import *
 #
@@ -19,20 +17,23 @@ disable_warnings(InsecureRequestWarning) # Disable warning output due to invalid
 # RegionNamesList = {"SBC_CLx_R", "BROADCAST_CLX_R"}
 # RegionUUIDsList = getRegionUUIDs()
 def createRegion(SiteCode,Cluster):
-    try:
-        client, service, history = open_connection()
+    disable_warnings(InsecureRequestWarning) # Disable warning output due to invalid certificate
+    service = open_connection()
 
+    try:
         resp = service.addRegion(region={"name" : f"{SiteCode}_{Cluster}_R"})
         region_uuid = resp["return"].strip("{}").lower()
         return region_uuid
+
     except Fault as err:
         print(f'Error Inserting Region: {err}')
         return ""
 
 def addRegionMatrix(Aregionuuid, Bregionuuid):
-    try:
-        client, service, history = open_connection()
+    disable_warnings(InsecureRequestWarning) # Disable warning output due to invalid certificate
+    service = open_connection()
 
+    try:
         sql_stmt = '''
                 INSERT INTO regionmatrix (fkregion_a, fkregion_b, videobandwidth, fkcodeclist, immersivebandwidth, audiobandwidth)
                 VALUES ('{new_uuid}', '{target_uuid}', 384, '22910f2b-51ab-4a46-b606-604a28558568', -2, 64)
@@ -40,20 +41,28 @@ def addRegionMatrix(Aregionuuid, Bregionuuid):
                     new_uuid = Aregionuuid,
                     target_uuid = Bregionuuid
                 )
-        resp = service.executeSQLUpdate(sql_stmt)
+        service.executeSQLUpdate(sql_stmt)
         return True
+        
     except Fault as err:
         print(f'Error Inserting Region: {err}')
         return False
 
 def getRegionUUIDs(RegionNamesList):
-    client, service, history = open_connection()
+    disable_warnings(InsecureRequestWarning) # Disable warning output due to invalid certificate
+    service = open_connection()
 
-    RegionUUIDsList = {}
-    for region in RegionNamesList:
-        resp = service.getRegion(name = region)
-        region_uuid = resp['return']['region']['uuid'].strip("{}").lower()
-        RegionUUIDsList + region_uuid
+    try:
+        RegionUUIDsList = []
+        for region in RegionNamesList:
+            resp = service.getRegion(name = region)
+            region_uuid = resp['return']['region']['uuid'].strip("{}").lower()
+            RegionUUIDsList.append(region_uuid)
+
+        return RegionUUIDsList
+
+    except Fault as err:
+        print(f'Error Inserting Region: {err}')
 
 
 ###############################################
