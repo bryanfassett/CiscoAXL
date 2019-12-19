@@ -4,6 +4,7 @@ from zeep.exceptions import Fault
 from zeep.plugins import HistoryPlugin
 from urllib3 import disable_warnings
 from urllib3.exceptions import InsecureRequestWarning
+import json
 
 # Create a Dictionary of all regions to create a relationship with the new region
 #region_matrix = {
@@ -20,57 +21,55 @@ client, service, history = open_connection() # Open connection using connect.py
 try:
     # Creating the base Region List
     base_region_list = ['CLX_R','SBC_CLx_R','BROADCAST_CLx_R']
-    # Creating an empty region_matrix to hold the Region name and uuid results, maybe not needed since I can create it during the for loop
-    region_matrix = {}
+    # Creating an empty region_dict to hold the Region name and uuid results, maybe not needed since I can create it during the for loop
+    region_dict = {}
 
     for region_name in base_region_list:
-        region_result = service.getRegion(name={region_name})
+        getRegResp = service.getRegion(name = region_name)
         #NO IDEA... I don't know the syntax of .getRegion and don't know what is returned
-        region_matrix.update(['return'])
+        #json_string = str(getRegResp['return'])
+        #region_dict = json.loads(json_string)
+        region_name = getRegResp['return']['region']['name']
+        region_uuid = getRegResp['return']['region']['uuid']
+        region_uuid = region_uuid.strip("{}").lower()
+        print ("Adding " + region_name + ", " + region_uuid + " to the dictionary")
+        region_dict[region_name]=region_uuid
+    print (region_dict)
 
-        #if region_result:
-        #    print region_result
-        #else:
-        #    print ("No results")
 
 except Fault as err:
-    print(f'Error Inserting Region: {err}')
+    print(f'Error Building Region UUID Dictionary: {err}')
 
 
 
-# EVERYTHING BELOW COMMENTED OUT TO TROUBLESHOOT THE .getRegion
+#Get name of the new region
+print("Enter new region name:")
+new_region_name= input() # wait for input
+print (f"\nCreating new region named {new_region_name}...")
 
+ 
+# Create new region and store uuid
+try:
+    # Create the new region
+    resp = service.addRegion(region={"name": new_region_name})
 
-# Get name of the new region
-# print("Enter new region name:")
-# region_name= input() # wait for input
-# print (f"\nCreating new region named {region_name}...")
+    # Store the returned uuid for later
+    new_region_uuid = resp['return']
+    new_region_uuid = region_uuid.strip("{}").lower()
+    print(f"New region uuid: {new_region_uuid}")
 
-
-
-
-# # Create new region and store uuid
-# try:
-#     # Create the new region
-#     resp = service.addRegion(region={"name": region_name})
-
-#     # Store the returned uuid for later
-#     region_uuid = resp['return']
-#     region_uuid = region_uuid.strip("{}").lower()
-#     print(f"New region uuid: {region_uuid}")
-
-#     # Loop through dictionary and run insert statement for each key (informix DB can't do values listing...)
-#     for region in region_matrix:
-#         sql_stmt = '''
-#             INSERT INTO regionmatrix (fkregion_a, fkregion_b, videobandwidth, fkcodeclist, immersivebandwidth, audiobandwidth)
-#             VALUES ('{new_uuid}', '{target_uuid}', 384, '22910f2b-51ab-4a46-b606-604a28558568', -2, 64)
-#         '''.format(
-#                 new_uuid = region_uuid,
-#                 target_uuid = region_matrix[region]
-#             )
+    # Loop through dictionary and run insert statement for each key (informix DB can't do values listing...)
+    for region_uuid in region_dict:
+        sql_stmt = '''
+        INSERT INTO regionmatrix (fkregion_a, fkregion_b, videobandwidth, fkcodeclist, immersivebandwidth, audiobandwidth)
+        VALUES ('{target_uuid}', '{new_uuid}', 384, '22910f2b-51ab-4a46-b606-604a28558568', -2, 64)
+        '''.format(
+        new_uuid = region_dict[region_uuid],
+        target_uuid = new_region_uuid
+        )
         
-#         resp = service.executeSQLUpdate(sql_stmt)
+        resp = service.executeSQLUpdate(sql_stmt)
 
-#     print('Region successfully created.')
-# except Fault as err:
-#     print(f'Error Inserting Region: {err}')
+        print('Relationships successfully created.')
+except Fault as err:
+    print(f'Error Inserting Region: {err}')
