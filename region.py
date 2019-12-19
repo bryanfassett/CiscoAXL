@@ -4,7 +4,6 @@ from zeep.exceptions import Fault
 from zeep.plugins import HistoryPlugin
 from urllib3 import disable_warnings
 from urllib3.exceptions import InsecureRequestWarning
-from stagelab import region_matrix
 
 # Create a Dictionary of all regions to create a relationship with the new region
 #region_matrix = {
@@ -25,9 +24,9 @@ try:
     region_matrix = {}
 
     for region_name in base_region_list:
-        region_result = service.getRegion(region_name)
+        region_result = service.getRegion(name={region_name})
         #NO IDEA... I don't know the syntax of .getRegion and don't know what is returned
-        region_matrix.update({name}:uuid)
+        region_matrix.update(['return'])
 
         #if region_result:
         #    print region_result
