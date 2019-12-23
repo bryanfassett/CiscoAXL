@@ -44,10 +44,9 @@ print (f"\nCreating new region named {new_region_name}...")
 try:
     # Create the new region
     resp = service.addRegion(region={"name": new_region_name})
-
     # Store the returned uuid of the new Region for later
     new_region_uuid = resp['return']
-    new_region_uuid = region_uuid.strip("{}").lower()
+    new_region_uuid = new_region_uuid.strip("{}").lower()
     print(f"New region uuid: {new_region_uuid}")
 
     # Loop through dictionary and run insert statement for each key (informix DB can't do values listing...)
@@ -56,14 +55,12 @@ try:
         INSERT INTO regionmatrix (fkregion_a, fkregion_b, videobandwidth, fkcodeclist, immersivebandwidth, audiobandwidth)
         VALUES ('{target_uuid}', '{new_uuid}', 384, '22910f2b-51ab-4a46-b606-604a28558568', -2, 64)
         '''.format(
-        new_uuid = region_dict[region_uuid],
-        target_uuid = new_region_uuid
+        new_uuid = new_region_uuid,
+        target_uuid = region_dict[region_uuid]
         )
-        print region_dict
-        print region
-        print new_region_uuid
-        # resp = service.executeSQLUpdate(sql_stmt)
 
-        print('Relationships successfully created.')
+        resp = service.executeSQLUpdate(sql_stmt)
+
+    print('Relationships successfully created.')
 except Fault as err:
     print(f'Error Inserting Region: {err}')
