@@ -34,5 +34,3 @@ def stage_regions():
 
     except Fault as err:
         print(f'Error Inserting Region: {err}')
-
-stage_regions()
