@@ -16,7 +16,7 @@ print("Enter the new site code:")
 siteCode = input() #Wait for Input of Site Code
 print(siteCode)
 
-print ("Enter the cluster number (1,2,3,4,etc.):)
+print ("Enter the cluster number (1,2,3,4,etc.):")
 clusterAbbr = input()
 clusterAbbr = "CL" + clusterAbbr                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      "CL"+ clusterNum
 print(clusterAbbr)
