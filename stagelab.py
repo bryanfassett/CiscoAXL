@@ -11,7 +11,7 @@ client, service, history = open_connection() # Open connection using connect.py
 
 
 
-def stage_regions():
+def stage_everything():
     # Create Blank Region Dictionary
     # region_matrix = {}
     try:
@@ -29,8 +29,40 @@ def stage_regions():
             # print(f"New region uuid: {region_uuid}")
             # region_matrix.update({region_name:region_uuid})
             print (f"Region {region_name} successfully created.")
-        print(f"\nDONE!\n")
-
-
+        print(f"\nDONE! Creating Base Regions\n")
     except Fault as err:
         print(f'Error Inserting Region: {err}')
+
+    # Build Initial CMRG CL1 Group 1
+    try:
+        for groupNum in range(1,6):
+            print("Creating CallManager Group")
+            resp = service.addCallManagerGroup(
+                callManagerGroup = {
+                    'name' : "CL{groupnum}_CMRG_{groupNum}",
+                    'members' : {
+                        'member' : {
+                            'callManagerName' : 'CM_hq-cucm-pub',
+                            'priority' : 1
+                        }
+                    }      
+                }
+            )
+            resp = service.addCallManagerGroup(
+                callManagerGroup = {
+                    'name' : f"CL1_CMRG_{groupNum}",
+                    'members' : {
+                        'member' : {
+                            'callManagerName' : 'CM_hq-cucm-pub',
+                            'priority' : 1
+                        }
+                    }      
+                }
+            )
+        print(f"\nDONE! Creating Base CMRG\n")
+
+    except Fault as err:
+        print(f'Error Inserting CMRG: {err}')
+
+    # BUILD DATE TIME GROUPS
+    

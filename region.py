@@ -5,7 +5,7 @@ from zeep.plugins import HistoryPlugin
 from urllib3 import disable_warnings
 from urllib3.exceptions import InsecureRequestWarning
 
-def createRegion(newRegionName)
+def createRegion(newRegionName):
     disable_warnings(InsecureRequestWarning) # Disable warning output due to invalid certificate
     client, service, history = open_connection() # Open connection using connect.py
 
@@ -27,7 +27,7 @@ def createRegion(newRegionName)
             print ("Adding " + regionName + ", " + regionUUID + " to the dictionary")
             #Populate the dict with Region Names and UUID key pairs
             regionDict[regionName]=regionUUID
-        print (regionDict)
+        # print (regionDict)
 
     # Throw an error if there is a problem building the dictionary
     except Fault as err:
@@ -48,7 +48,7 @@ def createRegion(newRegionName)
         # Store the returned uuid of the new Region for later
         newRegionUUID = resp['return']
         newRegionUUID = newRegionUUID.strip("{}").lower()
-        print(f"New region uuid: {newRegionUUID}")
+        # print(f"New region uuid: {newRegionUUID}")
 
         # Loop through dictionary and run insert statement for each key (informix DB can't do values listing...)
         for regionUUID in regionDict:

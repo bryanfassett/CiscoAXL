@@ -8,7 +8,9 @@ from urllib3.exceptions import InsecureRequestWarning
 def createLocation(SiteCode, Cluster, CAC):
     disable_warnings(InsecureRequestWarning) # Disable warning output due to invalid certificate
     service = open_connection()
-
+    print (SiteCode)
+    print (Cluster)
+    print (CAC)
     try:
         resp = service.addLocation(
             location = {
