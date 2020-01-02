@@ -5,13 +5,10 @@ from urllib3 import disable_warnings
 from urllib3.exceptions import InsecureRequestWarning
 
 
-
-disable_warnings(InsecureRequestWarning) # Disable warning output due to invalid certificate
-client, service, history = open_connection() # Open connection using connect.py
-
-
-
 def stageRegions():
+    disable_warnings(InsecureRequestWarning) # Disable warning output due to invalid certificate
+    client, service, history = open_connection() # Open connection using connect.py
+
     # Create Blank Region Dictionary
     # region_matrix = {}
     try:
@@ -36,30 +33,20 @@ def stageRegions():
 # Build Initial CMRG CL1 Group 1
 def stageCMRGs():
     try:
-        for clusterNum in range(1,3):
+        for clusterNum in range(1,6):
             for groupNum in range(1,3):
-                resp = service.addCallManagerGroup(
-                    callManagerGroup = {
-                        'name' : f"CL{clusterNum}_CMRG_{groupNum}",
-                        'members' : {
-                            'member' : {
-                                'callManagerName' : 'CM_hq-cucm-pub',
-                                'priority' : 1
-                            }
-                        }      
-                    }
-                )
-                resp = service.addCallManagerGroup(
-                    callManagerGroup = {
-                        'name' : f"CL{clusterNum}_CMRG_{groupNum}b",
-                        'members' : {
-                            'member' : {
-                                'callManagerName' : 'CM_hq-cucm-pub',
-                                'priority' : 1
-                            }
-                        }      
-                    }
-                )
+                for side in ["a","b"]:
+                    service.addCallManagerGroup(
+                        callManagerGroup = {
+                            'name' : f"CL{clusterNum}_CMRG_{groupNum}{side}",
+                            'members' : {
+                                'member' : {
+                                    'callManagerName' : 'CM_hq-cucm-pub',
+                                    'priority' : 1
+                                }
+                            }      
+                        }
+                    )
                 print(f"\nCreating Base CMRG for CL{clusterNum} pair {groupNum}\n")
 
     except Fault as err:
@@ -85,16 +72,14 @@ def stageDTGroups():
     base_DateTime_List = {'Eastern':'America/New_York','Central':'America/Chicago','Mountain':'America/Denver','Arizona':'America/Phoenix','Pacific':'America/Los_Angeles'}
 
     try:
-        for keys in base_DateTime_List:
-            datetimeName = str(keys)
-            timezoneName = base_DateTime_List[datetimeName]
+        for key in base_DateTime_List:
             resp = service.addDateTimeGroup(
                 dateTimeGroup = {
-                    'name' : f"{datetimeName}",
-                    'timeZone' : f"{timezoneName}",
+                    'name' : f"{key}",
+                    'timeZone' : f"{base_DateTime_List[key]}",
                     'separator' : '/',
                     'dateformat' : 'D/M/Y',
-                    'timeFormat' : '24-hour'
+                    'timeFormat' : '12-hour'
                 }      
             )        
     except Fault as err:
