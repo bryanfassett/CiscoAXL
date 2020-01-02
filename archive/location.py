@@ -27,6 +27,7 @@ def createLocation(SiteCode, Cluster, CAC):
                 }      
             }
         )
+        
         location_uuid = resp['return'].strip("{}").lower()
 
         resp = service.getLocation(

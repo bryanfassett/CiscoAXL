@@ -13,7 +13,7 @@ def createDevicePool(SiteCode, Cluster, CMRG, Timezone):
             devicePool = {
                 'name' : f"{SiteCode}_{Cluster}_DP1",
                 'datetimeSettingName' : Timezone,
-                'callManagerGroupName' : f"{Cluster}_CMRG_{CMRG}"
+                'callManagerGroupName' : f"{Cluster}_CMRG_{CMRG}",
                 'mediaResourceListName' : f'{SiteCode}_{Cluster}_MRGL',
                 'regionName' : f'{SiteCode}_{Cluster}_R',
                 'srstName' : 'Disable',
