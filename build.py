@@ -26,7 +26,7 @@ regionName = siteCode + "_R"
 createRegion(regionName)
 
 
-print ("Enter the cluster number (1,2,3,4,etc.):")
+print ("Enter the cluster number (1-5):")
 clusterNum = input()
 clusterAbbr = "CL" + clusterNum
 # print(clusterAbbr)
@@ -39,17 +39,17 @@ cacValue = int((int(efQueue) / 92) * 80)
 # CALL LOCATION FUNTION
 createLocation(siteCode, clusterAbbr, cacValue)
 
-# print("Enter the CMRG suffix (2a, 2b, 3a, 3b, etc.") #This will be automated someday
-# cmrgSuffix = input()
-# cmrg = clusterAbbr + "_CMRG_" + cmrgSuffix.upper()
-# # print (cmrg)
+# Gather final information for building device pool
+print("Enter the CMRG suffix (pair 1-5 a or b") #This will be automated someday
+cmrgSuffix = input()
+cmrg = clusterAbbr + "_CMRG_" + cmrgSuffix.upper()
+# print (cmrg)
 
-# print("Enter a DateTime Group --Use CMLocal, ZipCode eventually")
-# dateTimeGroup = input()
-# # Hardcoding until datetimegroup is built
-# dateTimeGroup = "CMLocal"
+print("Enter a DateTime Group --Use CMLocal, Eastern, Central, etc)
+# DT Group will be pulled from ZipCode eventually
+dateTimeGroup = input()
 
-# #createDevicePool(siteCode, clusterAbbr, cmrg, dateTimeGroup)
+createDevicePool(siteCode, clusterAbbr, cmrg, dateTimeGroup)
 
 print("Done")
     
