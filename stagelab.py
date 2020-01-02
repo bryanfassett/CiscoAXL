@@ -11,12 +11,12 @@ client, service, history = open_connection() # Open connection using connect.py
 
 
 
-def stage_everything():
+def stageRegions():
     # Create Blank Region Dictionary
     # region_matrix = {}
     try:
         # Create initial hardcoded Regions List to test with
-        base_region_list = ['CLX_R','SBC_CLx_R','BROADCAST_CLx_R']
+        base_region_list = ['BROADCAST_CLx_R','CLX_R','E911_CLx_R','MoH_CLx_R','ONNET_CLx_R','SBC_CLx_R','VM_CLx_R']
         
         # Create the new regions from hardcoded region list
         for region_name in base_region_list:
@@ -33,36 +33,69 @@ def stage_everything():
     except Fault as err:
         print(f'Error Inserting Region: {err}')
 
-    # Build Initial CMRG CL1 Group 1
+# Build Initial CMRG CL1 Group 1
+def stageCMRGs():
     try:
-        for groupNum in range(1,6):
-            print("Creating CallManager Group")
-            resp = service.addCallManagerGroup(
-                callManagerGroup = {
-                    'name' : "CL{groupnum}_CMRG_{groupNum}",
-                    'members' : {
-                        'member' : {
-                            'callManagerName' : 'CM_hq-cucm-pub',
-                            'priority' : 1
-                        }
-                    }      
-                }
-            )
-            resp = service.addCallManagerGroup(
-                callManagerGroup = {
-                    'name' : f"CL1_CMRG_{groupNum}",
-                    'members' : {
-                        'member' : {
-                            'callManagerName' : 'CM_hq-cucm-pub',
-                            'priority' : 1
-                        }
-                    }      
-                }
-            )
-        print(f"\nDONE! Creating Base CMRG\n")
+        for clusterNum in range(1,3):
+            for groupNum in range(1,3):
+                resp = service.addCallManagerGroup(
+                    callManagerGroup = {
+                        'name' : f"CL{clusterNum}_CMRG_{groupNum}",
+                        'members' : {
+                            'member' : {
+                                'callManagerName' : 'CM_hq-cucm-pub',
+                                'priority' : 1
+                            }
+                        }      
+                    }
+                )
+                resp = service.addCallManagerGroup(
+                    callManagerGroup = {
+                        'name' : f"CL{clusterNum}_CMRG_{groupNum}b",
+                        'members' : {
+                            'member' : {
+                                'callManagerName' : 'CM_hq-cucm-pub',
+                                'priority' : 1
+                            }
+                        }      
+                    }
+                )
+                print(f"\nCreating Base CMRG for CL{clusterNum} pair {groupNum}\n")
 
     except Fault as err:
         print(f'Error Inserting CMRG: {err}')
 
-    # BUILD DATE TIME GROUPS
-    
+# BUILD PHONE NTP
+def stagePhoneNTP():
+    try:
+        resp = service.addPhoneNtp(
+            phoneNtp = {
+                'ipAddress' : '10.10.20.1',
+                'description': 'NTP Server 1',
+                'mode' : 'Directed Broadcast'
+            }
+        )
+    except Fault as err:
+        print(f'Error Inserting NTP: {err}')
+
+# BUILD DATE TIME GROUPS
+def stageDTGroups():
+
+    #CREATE DICTIONARY FOR TIME ZONES --- 
+    base_DateTime_List = {'Eastern':'America/New_York','Central':'America/Chicago','Mountain':'America/Denver','Arizona':'America/Phoenix','Pacific':'America/Los_Angeles'}
+
+    try:
+        for keys in base_DateTime_List:
+            datetimeName = str(keys)
+            timezoneName = base_DateTime_List[datetimeName]
+            resp = service.addDateTimeGroup(
+                dateTimeGroup = {
+                    'name' : f"{datetimeName}",
+                    'timeZone' : f"{timezoneName}",
+                    'separator' : '/',
+                    'dateformat' : 'D/M/Y',
+                    'timeFormat' : '24-hour'
+                }      
+            )        
+    except Fault as err:
+        print(f'Error Inserting DateTimeGroups: {err}')   

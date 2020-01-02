@@ -1,4 +1,4 @@
-from stagelab import stage_everything
+from stagelab import stageRegions,stageCMRGs,stagePhoneNTP,stageDTGroups
 from region import createRegion
 from location import createLocation
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
@@ -7,8 +7,15 @@ print("Do you need to prebuild a lab site?  Y/N")
 needPrebuild = str(input())
 
 if needPrebuild == "Y":
-    stage_everything()
-    print("The lab has been staged.")
+    stageRegions()
+    print("The Regions have been staged.")
+    stageCMRGs()
+    print("The CMRGs have been staged.")
+    stagePhoneNTP()
+    print("The Phone NTP has been staged.")
+    stageDTGroups()
+    print("The DateTime Groups have been staged.")
+    
 
 # Start gathering info for the New Site Build Portion
 print("Moving on to site build...")
@@ -26,24 +33,24 @@ clusterAbbr = "CL" + clusterNum
 
 print("Enter the priority queue amount from the router:")
 efQueue = input()
-cac = int((int(efQueue) / 92) * 80)
-# print (cac)
+cacValue = int((int(efQueue) / 92) * 80)
+# print (cacValue)
 
 # CALL LOCATION FUNTION
-createLocation(siteCode, clusterAbbr, cac)
+createLocation(siteCode, clusterAbbr, cacValue)
 
-print("Enter the CMRG suffix (2a, 2b, 3a, 3b, etc.") #This will be automated someday
-cmrgSuffix = input()
-cmrg = clusterAbbr + "_CMRG_" + cmrgSuffix.upper()
-# print (cmrg)
+# print("Enter the CMRG suffix (2a, 2b, 3a, 3b, etc.") #This will be automated someday
+# cmrgSuffix = input()
+# cmrg = clusterAbbr + "_CMRG_" + cmrgSuffix.upper()
+# # print (cmrg)
 
-print("Enter a DateTime Group --Use CMLocal, ZipCode eventually")
-dateTimeGroup = input()
-# Hardcoding until datetimegroup is built
-dateTimeGroup = "CMLocal"
+# print("Enter a DateTime Group --Use CMLocal, ZipCode eventually")
+# dateTimeGroup = input()
+# # Hardcoding until datetimegroup is built
+# dateTimeGroup = "CMLocal"
 
-createDevicePool(siteCode,clusterAbbr,cmrg,dateTimeGroup)
+# #createDevicePool(siteCode, clusterAbbr, cmrg, dateTimeGroup)
 
-Print("Done")
+print("Done")
     
 
