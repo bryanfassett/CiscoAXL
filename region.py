@@ -12,7 +12,7 @@ def createRegion(newRegionName):
     # Attempting to pull the uuids for each Region in the base Region List
     try:
         # Creating the base Region List Hardcoding for now
-        baseRegionList = ['BROADCAST_CLx_R','CLX_R','E911_CLx_R','MoH_CLx_R','ONNET_CLx_R','SBC_CLx_R','VM_CLx_R']
+        baseRegionList = ['BROADCAST_CLx_R','CLX_R','CONF_CLx_R','E911_CLx_R','IVR-QUEUE_CLx_R','MoH_CLx_R','ONNET_CLx_R','SBC_CLx_R','VM_CLx_R']
         # Creating an empty regionDict to hold the Region name and uuid results.
         regionDict = {}
         
@@ -44,7 +44,7 @@ def createRegion(newRegionName):
     # Create the new Region and store uuid
     try:
         # Create the new region
-        resp = service.addRegion(region={"name": newRegionName})
+        resp = service.addRegion(region={"name": f"{newRegionName}"})
         # Store the returned uuid of the new Region for later
         newRegionUUID = resp['return']
         newRegionUUID = newRegionUUID.strip("{}").lower()
