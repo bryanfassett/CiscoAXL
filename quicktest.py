@@ -1,11 +1,11 @@
-from analog import createAnalogGateway
+from classofcontrol import createCSSs, createPartitions
 
-Sitecode = "zz333"
+Sitecode = "MN000"
 clusterAbbr = "CL3"
 CMRG = "CL3_CMRG_2B"
 vgType = "VG310"
 vgQuantity = 2
 mdfFloor = 2
-#createPartitions (Sitecode,clusterAbbr)
-#createCSSs(Sitecode,clusterAbbr)
-createAnalogGateway(Sitecode, clusterAbbr, CMRG, vgType, vgQuantity, mdfFloor)
+createPartitions (Sitecode,clusterAbbr)
+createCSSs(Sitecode,clusterAbbr)
+#createAnalogGateway(Sitecode, clusterAbbr, CMRG, vgType, vgQuantity, mdfFloor)

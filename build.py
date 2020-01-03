@@ -29,7 +29,8 @@ if needPrebuild == "Y":
     # print("The Gateways have been staged.")
     stageRouteGroups()
     print("The RouteGroups have been staged.")
-
+    stagePartitions()
+    print("The Partitions have been staged.")
 # Start gathering info for the New Site Build Portion
 print("Moving on to site build...")
 

@@ -41,19 +41,17 @@ def createCSSs(SiteCode, Cluster):
     except Fault as err:
         print(f'Error Inserting Site CSSs: {err}')
 
-    # try:
-    #     cssDeviceMembers = [f"{SiteCode}_{Cluster}_Trans_PT",f"{SiteCode}_{Cluster}_Outbound_PT",f"{Cluster}_Outbound_PT",f"E911_{Cluster}_Hunt_PT",f"{SiteCode}_Park_PT",f"{Cluster}_CMService_PT"]
-    #     i = 1
-    #     for member in cssDeviceMembers:
-    #         service.updateCss(
-    #             #'name' : f"{SiteCode}_{Cluster}_Device_CSS",
-    #             addMembers = {
-    #                 'member' : {
-    #                     'routePartitionName' : f"{SiteCode}_{Cluster}_Device_CSS",
-    #                     'index' : i
-    #                 }
-    #             }
-    #         )
-    #         i =+ 1
-    # except Fault as err:
-    #     print(f'Error Inserting CSSs Members: {err}')
+    try:
+        cssDeviceMembers = [f"{SiteCode}_{Cluster}_Trans_PT",f"{SiteCode}_{Cluster}_Outbound_PT",f"{Cluster}_Outbound_PT",f"E911_{Cluster}_Hunt_PT",f"{SiteCode}_Park_PT",f"{Cluster}_CMService_PT"]
+        for i, member in enumerate(cssDeviceMembers):
+            service.updateCss(
+                name = f"{SiteCode}_{Cluster}_Device_CSS",
+                addMembers = {
+                    'member' : {
+                        'routePartitionName' : member,
+                        'index' : ++i
+                    }
+                }
+            )
+    except Fault as err:
+        print(f'Error Inserting CSSs Members: {err}')
