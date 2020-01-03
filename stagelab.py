@@ -194,3 +194,22 @@ def stageRouteGroups():
                 )        
     except Fault as err:
         print(f'Error Inserting RouteGroups: {err}')
+
+def stagePartitions():
+
+    disable_warnings(InsecureRequestWarning) # Disable warning output due to invalid certificate
+    client, service, history = open_connection() # Open connection using connect.py
+    
+    try:
+        for clusterNum in range(1,6):
+            cluster = f"CL{clusterNum}"
+            partitionNames = [f"{cluster}_DN_PT",f"{cluster}_Outbound_PT",f"E911_{cluster}_PT",f"{cluster}_CMService_PT"]
+            for partitions in partitionNames:
+                service.addRoutePartition(
+                    routePartition = {
+                        'name' : partitions,
+                        'description' : partitions
+                    }
+                )
+    except Fault as err:
+        print(f'Error Inserting Partitions: {err}')

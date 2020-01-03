@@ -1,7 +1,6 @@
-from location import createLocation
+from partitions import createCSSs
 
 siteCode = "KY999"
-clusterAbbr = "CL1"
-cacValue = 4500
-
-createLocation(siteCode, clusterAbbr, cacValue)
+# clusterAbbr = "CL1"
+createCSSs(siteCode)
+# createPartitions(siteCode, clusterAbbr)

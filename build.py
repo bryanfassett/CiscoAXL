@@ -1,7 +1,8 @@
-from stagelab import stageRegions,stageLocations,stageCMRGs,stagePhoneNTP,stageDTGroups,stageMRGs,stageMRGLs,stageRouteGroups
+from stagelab import stageRegions,stageLocations,stageCMRGs,stagePhoneNTP,stageDTGroups,stageMRGs,stageMRGLs,stageRouteGroups,stagePartitions
 from region import createRegion
 from location import createLocation
 from devicepool import createDevicePool
+from partitions import createPartitions
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
 # Give the option to prebuild the lab
 print("Do you need to prebuild a lab site?  Y/N")
@@ -62,5 +63,7 @@ print("Who is the SIP carrier for the site (ATT,CTL,VZB)")
 sipCarrier = input()
 
 createDevicePool(siteCode, clusterAbbr, cmrg, datetimeGroup, sipCarrier)
+
+createPartitions(siteCode)
 
 print("Done")
