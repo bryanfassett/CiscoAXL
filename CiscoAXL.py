@@ -74,7 +74,7 @@ class Site:
             try:
                 for i in range(1,100):
                     if i == 1:
-                        successful, data = BuildRegion(conn.Service, self.SiteCode, self.AbbreviatedCluster)
+                        successful, data = BuildRegion(conn.Service, f"{self.SiteCode}_{self.AbbreviatedCluster}_R", self.AbbreviatedCluster)
                     elif i == 2:
                         BuildLocation(conn.Service, self.SiteCode, self.AbbreviatedCluster, self.CAC)
                     elif i == 3:
@@ -105,9 +105,9 @@ class Site:
 # Non-Instanced functions below
 #
 
-def BuildRegion(conn, SiteCode, AbbrevCluster, AddRegionMatrices = True):
+def BuildRegion(conn, RegionName, AbbrevCluster, AddRegionMatrices = True):
     try:
-        resp = conn.addRegion(region={"name" : f"{SiteCode}_{AbbrevCluster}_R"})
+        resp = conn.addRegion(region={"name" : f"{RegionName}"})
         region_uuid = resp["return"].strip("{}").lower()
 
         if AddRegionMatrices:
@@ -149,7 +149,7 @@ def addRegionMatrix(conn, Aregionuuid, Bregionuuid):
     except Fault as err:
         return False, err
 
-def BuildLocation(conn, SiteCode, AbbrevCluster, CAC, AssociateE911 = True):
+def BuildLocation(conn, SiteCode, AbbrevCluster, CAC, VideoBandwidth = 512, AssociateE911 = True):
     try:
         resp = conn.addLocation(
             location = {
