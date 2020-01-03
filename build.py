@@ -2,8 +2,10 @@ from stagelab import stageRegions,stageLocations,stageCMRGs,stagePhoneNTP,stageD
 from region import createRegion
 from location import createLocation
 from devicepool import createDevicePool
-from partitions import createPartitions
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+from classofcontrol import createPartitions, createCSSs
+from analog import createAnalogGateway
+
+
 # Give the option to prebuild the lab
 print("Do you need to prebuild a lab site?  Y/N")
 needPrebuild = str(input())
@@ -64,6 +66,16 @@ sipCarrier = input()
 
 createDevicePool(siteCode, clusterAbbr, cmrg, datetimeGroup, sipCarrier)
 
-createPartitions(siteCode)
+# createPartitions (siteCode,clusterAbbr)
+createCSSs(siteCode,clusterAbbr)
 
+# Build the analog voice gateways
+print("What type of analog gateway? (VG204, VG310)")
+vgType = input()
+print("How many do you need?")
+vgQuantity = input()
+print("What floor will it be located on?")
+mdfFloor = input()
+
+createAnalogGateway(siteCode,clusterAbbr,cmrg,vgType,vgQuantity,mdfFloor)
 print("Done")

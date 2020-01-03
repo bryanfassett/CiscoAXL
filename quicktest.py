@@ -1,6 +1,11 @@
-from partitions import createCSSs
+from analog import createAnalogGateway
 
-siteCode = "KY999"
-# clusterAbbr = "CL1"
-createCSSs(siteCode)
-# createPartitions(siteCode, clusterAbbr)
+Sitecode = "zz333"
+clusterAbbr = "CL3"
+CMRG = "CL3_CMRG_2B"
+vgType = "VG310"
+vgQuantity = 2
+mdfFloor = 2
+#createPartitions (Sitecode,clusterAbbr)
+#createCSSs(Sitecode,clusterAbbr)
+createAnalogGateway(Sitecode, clusterAbbr, CMRG, vgType, vgQuantity, mdfFloor)

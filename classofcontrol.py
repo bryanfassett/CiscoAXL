@@ -6,13 +6,13 @@ from urllib3 import disable_warnings
 from urllib3.exceptions import InsecureRequestWarning
 
     
-def createPartitions(SiteCode):
+def createPartitions(SiteCode, Cluster):
 
     disable_warnings(InsecureRequestWarning) # Disable warning output due to invalid certificate
     client, service, history = open_connection() # Open connection using connect.py
     
     try:
-        partitionNames = [f"{SiteCode}_Trans_PT",f"{SiteCode}_Outbound_PT",f"{SiteCode}_Park_PT"]
+        partitionNames = [f"{SiteCode}_{Cluster}_Trans_PT",f"{SiteCode}_{Cluster}_Outbound_PT",f"{SiteCode}_Park_PT"]
         for partitions in partitionNames:
             service.addRoutePartition(
                 routePartition = {
@@ -24,31 +24,36 @@ def createPartitions(SiteCode):
         print(f'Error Inserting Site Partitions: {err}')
 
 
-def createCSSs(SiteCode):
+def createCSSs(SiteCode, Cluster):
 
     disable_warnings(InsecureRequestWarning) # Disable warning output due to invalid certificate
     client, service, history = open_connection() # Open connection using connect.py
     
     try:
-        cssNames = [f"{SiteCode}_Device_CSS",f"{SiteCode}_Trans_CSS"]
+        cssNames = {f"{SiteCode}_{Cluster}_Device_CSS":f"{SiteCode} Device CSS",f"{SiteCode}_{Cluster}_Trans_CSS":f"{SiteCode} DN Access"}
         for css in cssNames:
             service.addCss(
                 css = {
                     'name' : css,
-                    'description' : css
+                    'description' : cssNames[css]
                 }
             )
     except Fault as err:
         print(f'Error Inserting Site CSSs: {err}')
-        
-    try:
-        cssNames = [f"{SiteCode}_Device_CSS",f"{SiteCode}_Trans_CSS"]
-        for css in cssNames:
-            service.addCss(
-                css = {
-                    'name' : css,
-                    'description' : css
-                }
-            )
-    except Fault as err:
-        print(f'Error Inserting Site CSSs: {err}')
+
+    # try:
+    #     cssDeviceMembers = [f"{SiteCode}_{Cluster}_Trans_PT",f"{SiteCode}_{Cluster}_Outbound_PT",f"{Cluster}_Outbound_PT",f"E911_{Cluster}_Hunt_PT",f"{SiteCode}_Park_PT",f"{Cluster}_CMService_PT"]
+    #     i = 1
+    #     for member in cssDeviceMembers:
+    #         service.updateCss(
+    #             #'name' : f"{SiteCode}_{Cluster}_Device_CSS",
+    #             addMembers = {
+    #                 'member' : {
+    #                     'routePartitionName' : f"{SiteCode}_{Cluster}_Device_CSS",
+    #                     'index' : i
+    #                 }
+    #             }
+    #         )
+    #         i =+ 1
+    # except Fault as err:
+    #     print(f'Error Inserting CSSs Members: {err}')

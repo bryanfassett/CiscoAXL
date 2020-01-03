@@ -35,12 +35,6 @@ def createRegion(newRegionName):
 
 
 
-    # Ask for the name of the new Region to be created
-    # print("Enter new region name:")
-    # newRegionName= input() # wait for input
-    # print (f"\nCreating new region named {newRegionName}...")
-
-    
     # Create the new Region and store uuid
     try:
         # Create the new region

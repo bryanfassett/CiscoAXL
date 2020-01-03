@@ -203,7 +203,7 @@ def stagePartitions():
     try:
         for clusterNum in range(1,6):
             cluster = f"CL{clusterNum}"
-            partitionNames = [f"{cluster}_DN_PT",f"{cluster}_Outbound_PT",f"E911_{cluster}_PT",f"{cluster}_CMService_PT"]
+            partitionNames = [f"{cluster}_DN_PT",f"{cluster}_Outbound_PT",f"E911_{cluster}_Hunt_PT",f"{cluster}_CMService_PT"]
             for partitions in partitionNames:
                 service.addRoutePartition(
                     routePartition = {
