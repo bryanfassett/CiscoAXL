@@ -150,55 +150,41 @@ def addRegionMatrix(conn, Aregionuuid, Bregionuuid):
         return False, err
 
 def BuildLocation(conn, SiteCode, AbbrevCluster, CAC, VideoBandwidth = 512, AssociateE911 = True):
-    try:
-        resp = conn.addLocation(
-            location = {
-                'name' : f"{SiteCode}_{AbbrevCluster}_L",
-                'withinAudioBandwidth' : 0,
-                'withinVideoBandwidth' : 0,
-                'withinImmersiveKbits' : 0,
-                'betweenLocations' : {
-                    'betweenLocation' : {
-                        'locationName' : 'Hub_None',
-                        'weight' : 50,
-                        'audioBandwidth' : CAC,
-                        'videoBandwidth' : 512,
-                        'immersiveBandwidth' : 384
-                    }
-                }  
-            }
+    LocationDict = {
+        'name' : f"{SiteCode}_{AbbrevCluster}_L",
+        'withinAudioBandwidth' : 0,
+        'withinVideoBandwidth' : 0,
+        'withinImmersiveKbits' : 0
+    }
+
+    BetweenLocationList = [
+        {
+            'locationName' : 'Hub_None',
+            'weight' : 50,
+            'audioBandwidth' : CAC,
+            'videoBandwidth' : VideoBandwidth,
+            'immersiveBandwidth' : 384
+        }
+    ]
+    if AssociateE911:
+        BetweenLocationList.append(
+            {
+                'locationName' : f"E911_{AbbrevCluster}_L",
+                'weight' : 50,
+                'audioBandwidth' : 999999,
+                'videoBandwidth' : 384,
+                'immersiveBandwidth' : 384
+            } 
         )
+    LocationDict.update({'betweenLocations' : { 'betweenLocation': BetweenLocationList}})
 
-        location_uuid = resp['return'].strip("{}").lower()
-        if AssociateE911:
-            if not AssociateE911Location(conn, location_uuid, AbbrevCluster):
-                raise Exception("Error associating E911 Location to new site Location")
-
-        return True, location_uuid
+    try:
+        resp = conn.addLocation(location = LocationDict)
+        return True, resp['return'].strip("{}").lower()
     except Fault as err:
         return False, err
     except Exception as err:
         return False, err
-
-def AssociateE911Location(conn, LocationUUID, AbbrevCluster):
-    try:
-        resp = conn.getLocation(
-                    name = f"E911_{AbbrevCluster}_L",
-                    returnedTags = 'uuid'
-            )
-        e911_location_uuid = resp['return']['location']['uuid'].strip("{}").lower()
-        sql_stmt = '''
-                INSERT INTO locationmatrix (fklocation_a, fklocation_b, weight, kbits, videokbits, immersivekbits)
-                VALUES ('{location_uuid}','{e911_location_uuid}', 50, 999999, 384, 384)
-            '''.format(
-                location_uuid = LocationUUID,
-                e911_location_uuid = e911_location_uuid
-            )
-        resp = conn.executeSQLUpdate(sql_stmt)
-    except Fault:
-        return False
-    except Exception:
-        return False
 
 def BuildDevicePool(conn, SiteCode, AbbrevCluster, CMRG, TZ, StandardLRG = None):
     try: 
