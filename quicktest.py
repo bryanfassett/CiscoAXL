@@ -1,11 +1,23 @@
-from classofcontrol import createCSSs, createPartitions
+from CiscoAXL import AxlConnection, WSDL, BuildPartitions
 
-Sitecode = "MN000"
-clusterAbbr = "CL3"
-CMRG = "CL3_CMRG_2B"
-vgType = "VG310"
-vgQuantity = 2
-mdfFloor = 2
-createPartitions (Sitecode,clusterAbbr)
-createCSSs(Sitecode,clusterAbbr)
-#createAnalogGateway(Sitecode, clusterAbbr, CMRG, vgType, vgQuantity, mdfFloor)
+def stagePartitions(ClusterNumber):
+    try:
+        conn = AxlConnection(WSDL)
+        if conn.Open():
+            result, details = BuildPartitions(conn.Service,"STAGING",f"CL{ClusterNumber}")
+            if not result:
+                raise Exception(details)
+            return True
+        else:
+            raise Exception("Error opening connection")
+    except Exception as err:
+        print(err)
+        return False
+
+for i in range(1,4):
+
+    result = stagePartitions(str(i))
+    if result:
+        print(f"Partition build successful for cluster {i}")
+    else:
+        print(f"Partition build failed for cluster {i}")
