@@ -1,4 +1,4 @@
-from CiscoAXL import AxlConnection, WSDL, BuildRegion, BuildLocation, BuildCMRGs, BuildDTGroups, BuildMRGs, BuildMRGLs, BuildRouteGroups, BuildPartitions
+from CiscoAXL import AxlConnection, WSDL, BuildRegion, BuildLocation, BuildCMRGs, BuildDTGroups, BuildMRGs, BuildMRGLs, BuildRouteGroups, BuildPartitions, BuildCSS
 
 def stageRegions(ClusterNumber):
     try:
@@ -106,8 +106,22 @@ def stageRouteGroups(ClusterNumber):
 def stagePartitions(ClusterNumber):
     try:
         conn = AxlConnection(WSDL)
-        if conn.open():
-            result, details = BuildRouteGroups(conn.Service,"STAGING",f"CL{ClusterNumber}")
+        if conn.Open():
+            result, details = BuildPartitions(conn.Service,"STAGING",f"CL{ClusterNumber}")
+            if not result:
+                raise Exception(details)
+            return True
+        else:
+            raise Exception("Error opening connection")
+    except Exception as err:
+        print(err)
+        return False
+
+def stageCSS(ClusterNumber):
+    try:
+        conn = AxlConnection(WSDL)
+        if conn.Open():
+            result, details = BuildCSS(conn.Service,"STAGING",f"CL{ClusterNumber}")
             if not result:
                 raise Exception(details)
             return True
@@ -154,6 +168,12 @@ for i in range(1,4):
         print(f"Partition build successful for cluster {i}")
     else:
         print(f"Partition build failed for cluster {i}")
+    
+    result = stageCSS(str(i))
+    if result:
+        print(f"Calling Search Space build successful for cluster {i}")
+    else:
+        print(f"Calling Search Space build failed for cluster {i}")
 
 result = stageDTGroups()
 if result:

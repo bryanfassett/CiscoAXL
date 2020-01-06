@@ -359,7 +359,7 @@ def BuildPartitions(conn, SiteCode, AbbrevCluster):
     if SiteCode == 'STAGING':
         partitionNames = {f'{AbbrevCluster}_DN_PT':f'{AbbrevCluster} DN Partition',f'{AbbrevCluster}_Outbound_PT':f'{AbbrevCluster} Outbound Partition',f'E911_{AbbrevCluster}_Hunt_PT':f'{AbbrevCluster} 911 Hunt Partition',f'{AbbrevCluster}_CMService_PT':f'{AbbrevCluster} Service Partition'}
     else:
-        partitionNames = {f'{SiteCode}_{AbbrevCluster}_Trans_PT':f'{SiteCode} Translation Partition',f'{SiteCode}_{AbbrevCluster}_Outbound_PT':f'{SiteCode} Outbound Partition',f'{SiteCode}_{AbbrevCluster}_Park_PT':f'{SiteCode} Park Partition'}
+        partitionNames = {f'{SiteCode}_{AbbrevCluster}_Trans_PT':f'{SiteCode} Translation Partition',f'{SiteCode}_{AbbrevCluster}_Outbound_PT':f'{SiteCode} Outbound Partition',f'{SiteCode}_Park_PT':f'{SiteCode} Park Partition'}
     try:
         for partition in partitionNames:
             resp = conn.addRoutePartition(
@@ -371,6 +371,51 @@ def BuildPartitions(conn, SiteCode, AbbrevCluster):
         partition_uuid = resp['return'].strip('{}').lower()
             
         return True, partition_uuid
+    except Fault as err:
+        return False, err
+    except Exception as err:
+        return False, err
+
+def BuildCSS(conn, SiteCode, AbbrevCluster):
+    try:
+        if SiteCode == 'STAGING':
+            cssNames = {f"{AbbrevCluster}_Trans_CSS":f"Cluster TransPattern CSS",f"{AbbrevCluster}_Inbound_CSS":f"Cluster Inbound Access",f"{AbbrevCluster}_Internal_CSS":f"Cluster Internal Only CSS",f"{AbbrevCluster}_Local_CSS":f"Cluster Local Dialing CSS",f"{AbbrevCluster}_LongDistance_CSS":f"Cluster Long Distance Dialing CSS",f"{AbbrevCluster}_International_CSS":f"Cluster International Dialing CSS"}
+        else:
+            cssNames = {f"{SiteCode}_{AbbrevCluster}_Device_CSS":f"{SiteCode} Device CSS",f"{SiteCode}_{AbbrevCluster}_Trans_CSS":f"{SiteCode} DN Access"}
+
+        for css in cssNames:
+            resp = conn.addCss(
+                css = {
+                    'name' : css,
+                    'description' : cssNames[css]
+                }
+            )
+        css_uuid = resp['return'].strip('{}').lower()
+            
+        if SiteCode != 'STAGING':
+            cssDeviceMembers = [f"{SiteCode}_{AbbrevCluster}_Trans_PT",f"{SiteCode}_{AbbrevCluster}_Outbound_PT",f"{AbbrevCluster}_Outbound_PT",f"E911_{AbbrevCluster}_Hunt_PT",f"{SiteCode}_Park_PT",f"{AbbrevCluster}_CMService_PT"]
+            for i, member in enumerate(cssDeviceMembers):
+                resp = conn.updateCss(
+                    name = f"{SiteCode}_{AbbrevCluster}_Device_CSS",
+                    addMembers = {
+                        'member' : {
+                            'routePartitionName' : member,
+                            'index' : ++i
+                        }
+                    }
+                )
+            resp = conn.updateCss(
+                name = f"{SiteCode}_{AbbrevCluster}_Trans_CSS",
+                addMembers = {
+                    'member' : {
+                        'routePartitionName' : f"{AbbrevCluster}_DN_PT",
+                        'index' : 1
+                    }
+                }
+            )
+        cssMembers_uuid = resp['return'].strip('{}').lower()
+        return True, cssMembers_uuid
+            
     except Fault as err:
         return False, err
     except Exception as err:
