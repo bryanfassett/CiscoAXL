@@ -253,9 +253,9 @@ def BuildMRGs(conn, AbbrevCluster, GroupNum):
                 'description' : f"{AbbrevCluster}_Hardware_MRG_{GroupNum}",
                 'multicast' : 'f',
                 'members' : {
-                    'member' : {
+                    'member' : [{
                         'deviceName' : 'ANN_2' 
-                    }   
+                    }]
                 }
             }
         )      
@@ -378,11 +378,7 @@ def BuildPartitions(conn, SiteCode, AbbrevCluster):
 
 def BuildCSS(conn, SiteCode, AbbrevCluster):
     try:
-        if SiteCode == 'STAGING':
-            cssNames = {f"{AbbrevCluster}_Trans_CSS":f"Cluster TransPattern CSS",f"{AbbrevCluster}_Inbound_CSS":f"Cluster Inbound Access",f"{AbbrevCluster}_Internal_CSS":f"Cluster Internal Only CSS",f"{AbbrevCluster}_Local_CSS":f"Cluster Local Dialing CSS",f"{AbbrevCluster}_LongDistance_CSS":f"Cluster Long Distance Dialing CSS",f"{AbbrevCluster}_International_CSS":f"Cluster International Dialing CSS"}
-        else:
-            cssNames = {f"{SiteCode}_{AbbrevCluster}_Device_CSS":f"{SiteCode} Device CSS",f"{SiteCode}_{AbbrevCluster}_Trans_CSS":f"{SiteCode} DN Access"}
-
+        cssNames = {f"{SiteCode}_{AbbrevCluster}_Device_CSS":f"{SiteCode} Device CSS",f"{SiteCode}_{AbbrevCluster}_Trans_CSS":f"{SiteCode} DN Access"}
         for css in cssNames:
             resp = conn.addCss(
                 css = {
@@ -392,30 +388,54 @@ def BuildCSS(conn, SiteCode, AbbrevCluster):
             )
         css_uuid = resp['return'].strip('{}').lower()
             
-        if SiteCode != 'STAGING':
-            cssDeviceMembers = [f"{SiteCode}_{AbbrevCluster}_Trans_PT",f"{SiteCode}_{AbbrevCluster}_Outbound_PT",f"{AbbrevCluster}_Outbound_PT",f"E911_{AbbrevCluster}_Hunt_PT",f"{SiteCode}_Park_PT",f"{AbbrevCluster}_CMService_PT"]
-            for i, member in enumerate(cssDeviceMembers):
-                resp = conn.updateCss(
-                    name = f"{SiteCode}_{AbbrevCluster}_Device_CSS",
-                    addMembers = {
-                        'member' : {
-                            'routePartitionName' : member,
-                            'index' : ++i
-                        }
-                    }
-                )
+        cssDeviceMembers = [f"{SiteCode}_{AbbrevCluster}_Trans_PT",f"{SiteCode}_{AbbrevCluster}_Outbound_PT",f"{AbbrevCluster}_Outbound_PT",f"E911_{AbbrevCluster}_Hunt_PT",f"{SiteCode}_Park_PT",f"{AbbrevCluster}_CMService_PT"]
+        for i, member in enumerate(cssDeviceMembers):
             resp = conn.updateCss(
-                name = f"{SiteCode}_{AbbrevCluster}_Trans_CSS",
+                name = f"{SiteCode}_{AbbrevCluster}_Device_CSS",
                 addMembers = {
                     'member' : {
-                        'routePartitionName' : f"{AbbrevCluster}_DN_PT",
-                        'index' : 1
+                        'routePartitionName' : member,
+                        'index' : ++i
                     }
                 }
             )
+        resp = conn.updateCss(
+            name = f"{SiteCode}_{AbbrevCluster}_Trans_CSS",
+            addMembers = {
+                'member' : {
+                    'routePartitionName' : f"{AbbrevCluster}_DN_PT",
+                    'index' : 1
+                }
+            }
+        )
         cssMembers_uuid = resp['return'].strip('{}').lower()
         return True, cssMembers_uuid
             
+    except Fault as err:
+        return False, err
+    except Exception as err:
+        return False, err
+
+def BuildTransPatterns(conn, SiteCode, AbbrevCluster, DNRange):
+    try:
+        pattern = "5XXXX"# DN Range Calculation goes here
+        prefixDigits = "111114"
+        resp = conn.addTransPattern(
+            transPattern = {
+                'pattern' : pattern,
+                'description' : f"{SiteCode} Incoming for {DNRange}",
+                'usage' : 'Translation',
+                'routePartitionName' : f"{SiteCode}_{AbbrevCluster}_Trans_PT",
+                'useCallingPartyPhoneMask' : "On",
+                'patternUrgency' : True,
+                'prefixDigitsOut' : prefixDigits,#string
+                'provideOutsideDialtone' : False,
+                'callingSearchSpaceName' : f"{SiteCode}_{AbbrevCluster}_Trans_CSS"
+            }
+        )
+        transpattern_uuid = resp['return'].strip('{}').lower()
+            
+        return True, transpattern_uuid
     except Fault as err:
         return False, err
     except Exception as err:

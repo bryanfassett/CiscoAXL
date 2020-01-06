@@ -120,6 +120,7 @@ def stagePartitions(ClusterNumber):
 def stageCSS(ClusterNumber):
     try:
         conn = AxlConnection(WSDL)
+        cssNames = {f"{AbbrevCluster}_Trans_CSS":f"Cluster TransPattern CSS",f"{AbbrevCluster}_Inbound_CSS":f"Cluster Inbound Access",f"{AbbrevCluster}_Internal_CSS":f"Cluster Internal Only CSS",f"{AbbrevCluster}_Local_CSS":f"Cluster Local Dialing CSS",f"{AbbrevCluster}_LongDistance_CSS":f"Cluster Long Distance Dialing CSS",f"{AbbrevCluster}_International_CSS":f"Cluster International Dialing CSS"}
         if conn.Open():
             result, details = BuildCSS(conn.Service,"STAGING",f"CL{ClusterNumber}")
             if not result:
