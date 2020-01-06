@@ -186,6 +186,117 @@ def BuildLocation(conn, SiteCode, AbbrevCluster, CAC, VideoBandwidth = 512, Asso
     except Exception as err:
         return False, err
 
+def BuildCMRGs(conn, AbbrevCluster, groupNum):
+    try:
+        for groupLetter in ["A","B"]:
+            resp = conn.addCallManagerGroup(
+                callManagerGroup = {
+                    'name' : f"{AbbrevCluster}_CMRG_{groupNum}{groupLetter}",
+                    'members' : {
+                        'member' : {
+                            'callManagerName' : 'CM_hq-cucm-pub',
+                            'priority' : 1
+                        }
+                    }      
+                }
+            )
+        cmrg_uuid = resp['return'].strip('{}').lower()
+        
+        return True, cmrg_uuid
+    except Fault as err:
+        return False, err
+    except Exception as err:
+        return False, err
+
+# NEEDS CLEANED UP IF WE ARE GOING TO USE FOR MORE THAN STAGING
+def BuildDTGroups(conn):
+    base_DateTime_List = {'Eastern':'America/New_York','Central':'America/Chicago','Mountain':'America/Denver','Arizona':'America/Phoenix','Pacific':'America/Los_Angeles'}
+    try:
+        for key in base_DateTime_List:
+            resp = conn.addDateTimeGroup(
+                dateTimeGroup = {
+                    'name' : f"{key}",
+                    'timeZone' : f"{base_DateTime_List[key]}",
+                    'separator' : '/',
+                    'dateformat' : 'D/M/Y',
+                    'timeFormat' : '12-hour'
+                }      
+            )
+        dtGroup_uuid = resp['return'].strip('{}').lower()
+        
+        return True, dtGroup_uuid
+    except Fault as err:
+        return False, err
+    except Exception as err:
+        return False, err
+
+# NEED TO BUILD OUT FOR xCODERS and CFBs, MEMBER CURRENTLY HARDCODED FOR LAB 
+def BuildMRGs(conn, AbbrevCluster, GroupNum):
+    try:
+        resp = conn.addMediaResourceGroup(
+            mediaResourceGroup = {
+                'name' : f"{AbbrevCluster}_Hardware_MRG_{GroupNum}",
+                'description' : f"{AbbrevCluster}_Hardware_MRG_{GroupNum}",
+                'multicast' : 'f',
+                'members' : {
+                    'member' : [{
+                        'deviceName' : 'ANN_2' 
+                    }]
+                }
+            }
+        )      
+        mrg_uuid = resp['return'].strip('{}').lower()
+
+        return True, mrg_uuid
+    except Fault as err:
+        return False, err
+    except Exception as err:
+        return False, err
+        
+def BuildMRGLs(conn, AbbrevCluster):
+    try:
+        resp = conn.addMediaResourceList(
+            mediaResourceList = {
+                'name' : f"RemoteSite_{AbbrevCluster}_MRGL",
+                'members' : {
+                    'member' : {
+                        'mediaResourceGroupName' : f"{AbbrevCluster}_Hardware_MRG_1",
+                        'order' : 1
+                    }   
+                }
+            }      
+        )        
+        mrgl_uuid = resp['return'].strip('{}').lower()
+        
+        return True, mrgl_uuid
+    except Fault as err:
+        return False, err
+    except Exception as err:
+        return False, err
+
+def BuildRouteGroups(conn, AbbrevCluster, Carrier):
+    try:
+        resp = conn.addRouteGroup(
+            routeGroup = {
+                'name' : f"SBC_{AbbrevCluster}_{Carrier}_RG",
+                'distributionAlgorithm' : "Circular",
+                'members' : {
+                    'member' : {
+                        'deviceSelectionOrder' : 1,
+                        'deviceName' : "SIPTrunktoCUP",
+                        'port' : 1
+                    }   
+                }
+            }      
+        )        
+        routegroup_uuid = resp['return'].strip('{}').lower()
+        
+        return True, routegroup_uuid
+    except Fault as err:
+        return False, err
+    except Exception as err:
+        return False, err
+   
 def BuildDevicePool(conn, SiteCode, AbbrevCluster, CMRG, TZ, StandardLRG = None):
     try: 
         resp = conn.addDevicePool(
@@ -270,7 +381,7 @@ def BuildCSS(conn, SiteCode, AbbrevCluster):
                 addMembers = {
                     'member' : {
                         'routePartitionName' : member,
-                        'index' : ++i
+                        'index' : i+1
                     }
                 }
             )
