@@ -45,11 +45,11 @@ def setStandardLocalRouteGroup(DevicePoolUUID, RouteGroupName):
         )
 
         resp = service.executeSQLUpdate(sql_stmt)
-        return true
+        return True
     
     except Fault as err:
         print(f"Error Setting RouteGroup {err}")
-        return false
+        return False
 
 
 # disable_warnings(InsecureRequestWarning) # Disable warning output due to invalid certificate
