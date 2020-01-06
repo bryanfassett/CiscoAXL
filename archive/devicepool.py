@@ -5,20 +5,20 @@ from zeep.plugins import HistoryPlugin
 from urllib3 import disable_warnings
 from urllib3.exceptions import InsecureRequestWarning
 
-def createDevicePool(SiteCode, Cluster, CMRG, dateTimeGroup, carrier):
+def createDevicePool(SiteCode, Cluster, CMRG, Timezone):
     disable_warnings(InsecureRequestWarning) # Disable warning output due to invalid certificate
-    client, service, history = open_connection() # Open connection using connect.py
+    service = open_connection()
     try:
         resp = service.addDevicePool(
             devicePool = {
                 'name' : f"{SiteCode}_{Cluster}_DP1",
-                'dateTimeSettingName' : dateTimeGroup,
-                'callManagerGroupName' : CMRG,
-                'mediaResourceListName' : f"RemoteSite_{Cluster}_MRGL",
+                'datetimeSettingName' : Timezone,
+                'callManagerGroupName' : f"{Cluster}_CMRG_{CMRG}",
+                'mediaResourceListName' : f'{SiteCode}_{Cluster}_MRGL',
                 'regionName' : f'{SiteCode}_{Cluster}_R',
                 'srstName' : 'Disable',
                 'locationName' : f'{SiteCode}_{Cluster}_L',
-                'localRouteGroup' : f'SBC_{Cluster}_{carrier}_RG'
+                'localRouteGroup' : f'{SiteCode}_{Cluster}_RG'
             }
         )
 

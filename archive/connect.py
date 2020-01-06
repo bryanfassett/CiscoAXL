@@ -33,8 +33,8 @@ def open_connection():
     history = HistoryPlugin()
     client = Client(wsdl=wsdl, transport=transport, plugins=[history])
     service = client.create_service(binding, location)
-    return client, service, history
-
+    return  service
+    
 def show_history(history):
     for item in [history.last_sent, history.last_received]:
         print(etree.tostring(item["envelope"], encoding="unicode", pretty_print=True))

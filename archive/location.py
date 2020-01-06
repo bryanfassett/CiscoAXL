@@ -5,13 +5,11 @@ from zeep.plugins import HistoryPlugin
 from urllib3 import disable_warnings
 from urllib3.exceptions import InsecureRequestWarning
 
-
-
+   
 def createLocation(SiteCode, Cluster, CAC):
-
     disable_warnings(InsecureRequestWarning) # Disable warning output due to invalid certificate
-    client, service, history = open_connection() # Open connection using connect.py
-    
+    service = open_connection()
+
     try:
         resp = service.addLocation(
             location = {
@@ -53,12 +51,6 @@ def createLocation(SiteCode, Cluster, CAC):
     except Fault as err:
         print(f"Error Inserting Location: {err}")
         return ""
-
-
-
-
-
-
 
 # # Get name of the new location and CAC
 # print("Enter new location name:")

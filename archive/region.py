@@ -5,57 +5,108 @@ from zeep.plugins import HistoryPlugin
 from urllib3 import disable_warnings
 from urllib3.exceptions import InsecureRequestWarning
 
-def createRegion(newRegionName):
+#staging.py
+# from region import *
+#
+# uuid = createRegion("ZZYYY", "CLx")
+# if uuid = "" then
+## failed to create region
+# else
+## successfully created region
+#
+# RegionNamesList = {"SBC_CLx_R", "BROADCAST_CLX_R"}
+# RegionUUIDsList = getRegionUUIDs()
+def createRegion(SiteCode,Cluster):
     disable_warnings(InsecureRequestWarning) # Disable warning output due to invalid certificate
-    client, service, history = open_connection() # Open connection using connect.py
+    service = open_connection()
 
-    # Attempting to pull the uuids for each Region in the base Region List
     try:
-        # Creating the base Region List Hardcoding for now
-        baseRegionList = ['BROADCAST_CLx_R','CLX_R','CONF_CLx_R','E911_CLx_R','IVR-QUEUE_CLx_R','MoH_CLx_R','ONNET_CLx_R','SBC_CLx_R','VM_CLx_R']
-        # Creating an empty regionDict to hold the Region name and uuid results.
-        regionDict = {}
-        
-        # REGION DICTIONARY BUILD
-        for regionName in baseRegionList:
-            #Pulling the information for each Region in the default list
-            getRegResp = service.getRegion(name = regionName)
-            # Set the returned name and uuid to a variable
-            regionName = getRegResp['return']['region']['name']
-            regionUUID = getRegResp['return']['region']['uuid']
-            regionUUID = regionUUID.strip("{}").lower()
-            print ("Adding " + regionName + ", " + regionUUID + " to the dictionary")
-            #Populate the dict with Region Names and UUID key pairs
-            regionDict[regionName]=regionUUID
-        # print (regionDict)
+        resp = service.addRegion(region={"name" : f"{SiteCode}_{Cluster}_R"})
+        region_uuid = resp["return"].strip("{}").lower()
+        return region_uuid
 
-    # Throw an error if there is a problem building the dictionary
-    except Fault as err:
-        print(f'Error Building Region UUID Dictionary: {err}')
-
-
-
-    # Create the new Region and store uuid
-    try:
-        # Create the new region
-        resp = service.addRegion(region={"name": f"{newRegionName}"})
-        # Store the returned uuid of the new Region for later
-        newRegionUUID = resp['return']
-        newRegionUUID = newRegionUUID.strip("{}").lower()
-        # print(f"New region uuid: {newRegionUUID}")
-
-        # Loop through dictionary and run insert statement for each key (informix DB can't do values listing...)
-        for regionUUID in regionDict:
-            sql_stmt = '''
-            INSERT INTO regionmatrix (fkregion_a, fkregion_b, videobandwidth, fkcodeclist, immersivebandwidth, audiobandwidth)
-            VALUES ('{target_uuid}', '{new_uuid}', 384, '22910f2b-51ab-4a46-b606-604a28558568', -2, 64)
-            '''.format(
-            new_uuid = newRegionUUID,
-            target_uuid = regionDict[regionUUID]
-            )
-
-            resp = service.executeSQLUpdate(sql_stmt)
-
-        print('Relationships successfully created.')
     except Fault as err:
         print(f'Error Inserting Region: {err}')
+        return ""
+
+def addRegionMatrix(Aregionuuid, Bregionuuid):
+    disable_warnings(InsecureRequestWarning) # Disable warning output due to invalid certificate
+    service = open_connection()
+
+    try:
+        sql_stmt = '''
+                INSERT INTO regionmatrix (fkregion_a, fkregion_b, videobandwidth, fkcodeclist, immersivebandwidth, audiobandwidth)
+                VALUES ('{new_uuid}', '{target_uuid}', 384, '22910f2b-51ab-4a46-b606-604a28558568', -2, 64)
+            '''.format(
+                    new_uuid = Aregionuuid,
+                    target_uuid = Bregionuuid
+                )
+        service.executeSQLUpdate(sql_stmt)
+        return True
+        
+    except Fault as err:
+        print(f'Error Inserting Region: {err}')
+        return False
+
+def getRegionUUIDs(RegionNamesList):
+    disable_warnings(InsecureRequestWarning) # Disable warning output due to invalid certificate
+    service = open_connection()
+
+    try:
+        RegionUUIDsList = []
+        for region in RegionNamesList:
+            resp = service.getRegion(name = region)
+            region_uuid = resp['return']['region']['uuid'].strip("{}").lower()
+            RegionUUIDsList.append(region_uuid)
+
+        return RegionUUIDsList
+
+    except Fault as err:
+        print(f'Error Inserting Region: {err}')
+
+
+###############################################
+###############################################
+###############################################
+
+# # Create a Dictionary of all regions to create a relationship with the new region
+# region_matrix = {
+#     # Region Name:  Region uuid
+#     'CLx_R': 'e80815d6-da74-033c-6294-d6fce4fc7da9',
+#     'SBC_CLx_R':'138bb056-38bf-956a-7a54-e1d122521e6a',
+#     'BROADCAST_CLx_R': '09835766-1838-9229-faff-bdda583af704'
+# }
+
+# disable_warnings(InsecureRequestWarning) # Disable warning output due to invalid certificate
+# client, service, history = open_connection() # Open connection using connect.py
+
+# # Get name of the new region
+# print("Enter new region name:")
+# region_name= input() # wait for input
+# print (f"\nCreating new region named {region_name}...")
+
+# # Create new region and store uuid
+# try:
+#     # Create the new region
+#     resp = service.addRegion(region={"name": region_name})
+
+#     # Store the returned uuid for later
+#     region_uuid = resp['return']
+#     region_uuid = region_uuid.strip("{}").lower()
+#     print(f"New region uuid: {region_uuid}")
+
+#     # Loop through dictionary and run insert statement for each key (informix DB can't do values listing...)
+#     for region in region_matrix:
+#         sql_stmt = '''
+#             INSERT INTO regionmatrix (fkregion_a, fkregion_b, videobandwidth, fkcodeclist, immersivebandwidth, audiobandwidth)
+#             VALUES ('{new_uuid}', '{target_uuid}', 384, '22910f2b-51ab-4a46-b606-604a28558568', -2, 64)
+#         '''.format(
+#                 new_uuid = region_uuid,
+#                 target_uuid = region_matrix[region]
+#             )
+        
+#         resp = service.executeSQLUpdate(sql_stmt)
+
+#     print('Region successfully created.')
+# except Fault as err:
+#     print(f'Error Inserting Region: {err}')

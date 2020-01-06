@@ -1,4 +1,4 @@
-from CiscoAXL import AxlConnection, WSDL, BuildRegion, BuildLocation, BuildCMRGs, BuildDTGroups, BuildMRGs, BuildMRGLs, BuildRouteGroups, BuildPartitions, BuildCSS
+from CiscoAXL import *
 
 def stageRegions(ClusterNumber):
     try:

@@ -150,162 +150,37 @@ def addRegionMatrix(conn, Aregionuuid, Bregionuuid):
         return False, err
 
 def BuildLocation(conn, SiteCode, AbbrevCluster, CAC, VideoBandwidth = 512, AssociateE911 = True):
-    try:
-        resp = conn.addLocation(
-            location = {
-                'name' : f"{SiteCode}_{AbbrevCluster}_L",
-                'withinAudioBandwidth' : 0,
-                'withinVideoBandwidth' : 0,
-                'withinImmersiveKbits' : 0,
-                'betweenLocations' : {
-                    'betweenLocation' : {
-                        'locationName' : 'Hub_None',
-                        'weight' : 50,
-                        'audioBandwidth' : CAC,
-                        'videoBandwidth' : 512,
-                        'immersiveBandwidth' : 384
-                    }
-                }  
-            }
+    LocationDict = {
+        'name' : f"{SiteCode}_{AbbrevCluster}_L",
+        'withinAudioBandwidth' : 0,
+        'withinVideoBandwidth' : 0,
+        'withinImmersiveKbits' : 0
+    }
+
+    BetweenLocationList = [
+        {
+            'locationName' : 'Hub_None',
+            'weight' : 50,
+            'audioBandwidth' : CAC,
+            'videoBandwidth' : VideoBandwidth,
+            'immersiveBandwidth' : 384
+        }
+    ]
+    if AssociateE911:
+        BetweenLocationList.append(
+            {
+                'locationName' : f"E911_{AbbrevCluster}_L",
+                'weight' : 50,
+                'audioBandwidth' : 999999,
+                'videoBandwidth' : 384,
+                'immersiveBandwidth' : 384
+            } 
         )
+    LocationDict.update({'betweenLocations' : { 'betweenLocation': BetweenLocationList}})
 
-        location_uuid = resp['return'].strip("{}").lower()
-        if AssociateE911:
-            if not AssociateE911Location(conn, location_uuid, AbbrevCluster):
-                raise Exception("Error associating E911 Location to new site Location")
-
-        return True, location_uuid
-    except Fault as err:
-        return False, err
-    except Exception as err:
-        return False, err
-
-def AssociateE911Location(conn, LocationUUID, AbbrevCluster):
     try:
-        resp = conn.getLocation(
-                    name = f"E911_{AbbrevCluster}_L",
-                    returnedTags = 'uuid'
-            )
-        e911_location_uuid = resp['return']['location']['uuid'].strip("{}").lower()
-        sql_stmt = '''
-                INSERT INTO locationmatrix (fklocation_a, fklocation_b, weight, kbits, videokbits, immersivekbits)
-                VALUES ('{location_uuid}','{e911_location_uuid}', 50, 999999, 384, 384)
-            '''.format(
-                location_uuid = LocationUUID,
-                e911_location_uuid = e911_location_uuid
-            )
-        resp = conn.executeSQLUpdate(sql_stmt)
-    except Fault:
-        return False
-    except Exception:
-        return False
-
-def BuildCMRGs(conn, AbbrevCluster, groupNum):
-    try:
-        for groupLetter in ["A","B"]:
-            resp = conn.addCallManagerGroup(
-                callManagerGroup = {
-                    'name' : f"{AbbrevCluster}_CMRG_{groupNum}{groupLetter}",
-                    'members' : {
-                        'member' : {
-                            'callManagerName' : 'CM_hq-cucm-pub',
-                            'priority' : 1
-                        }
-                    }      
-                }
-            )
-        cmrg_uuid = resp['return'].strip('{}').lower()
-        
-        return True, cmrg_uuid
-    except Fault as err:
-        return False, err
-    except Exception as err:
-        return False, err
-
-# NEEDS CLEANED UP IF WE ARE GOING TO USE FOR MORE THAN STAGING
-def BuildDTGroups(conn):
-    base_DateTime_List = {'Eastern':'America/New_York','Central':'America/Chicago','Mountain':'America/Denver','Arizona':'America/Phoenix','Pacific':'America/Los_Angeles'}
-    try:
-        for key in base_DateTime_List:
-            resp = conn.addDateTimeGroup(
-                dateTimeGroup = {
-                    'name' : f"{key}",
-                    'timeZone' : f"{base_DateTime_List[key]}",
-                    'separator' : '/',
-                    'dateformat' : 'D/M/Y',
-                    'timeFormat' : '12-hour'
-                }      
-            )
-        dtGroup_uuid = resp['return'].strip('{}').lower()
-        
-        return True, dtGroup_uuid
-    except Fault as err:
-        return False, err
-    except Exception as err:
-        return False, err
-
-# NEED TO BUILD OUT FOR xCODERS and CFBs, MEMBER CURRENTLY HARDCODED FOR LAB 
-def BuildMRGs(conn, AbbrevCluster, GroupNum):
-    try:
-        resp = conn.addMediaResourceGroup(
-            mediaResourceGroup = {
-                'name' : f"{AbbrevCluster}_Hardware_MRG_{GroupNum}",
-                'description' : f"{AbbrevCluster}_Hardware_MRG_{GroupNum}",
-                'multicast' : 'f',
-                'members' : {
-                    'member' : [{
-                        'deviceName' : 'ANN_2' 
-                    }]
-                }
-            }
-        )      
-        mrg_uuid = resp['return'].strip('{}').lower()
-
-        return True, mrg_uuid
-    except Fault as err:
-        return False, err
-    except Exception as err:
-        return False, err
-        
-def BuildMRGLs(conn, AbbrevCluster):
-    try:
-        resp = conn.addMediaResourceList(
-            mediaResourceList = {
-                'name' : f"RemoteSite_{AbbrevCluster}_MRGL",
-                'members' : {
-                    'member' : {
-                        'mediaResourceGroupName' : f"{AbbrevCluster}_Hardware_MRG_1",
-                        'order' : 1
-                    }   
-                }
-            }      
-        )        
-        mrgl_uuid = resp['return'].strip('{}').lower()
-        
-        return True, mrgl_uuid
-    except Fault as err:
-        return False, err
-    except Exception as err:
-        return False, err
-
-def BuildRouteGroups(conn, AbbrevCluster, Carrier):
-    try:
-        resp = conn.addRouteGroup(
-            routeGroup = {
-                'name' : f"SBC_{AbbrevCluster}_{Carrier}_RG",
-                'distributionAlgorithm' : "Circular",
-                'members' : {
-                    'member' : {
-                        'deviceSelectionOrder' : 1,
-                        'deviceName' : "SIPTrunktoCUP",
-                        'port' : 1
-                    }   
-                }
-            }      
-        )        
-        routegroup_uuid = resp['return'].strip('{}').lower()
-        
-        return True, routegroup_uuid
+        resp = conn.addLocation(location = LocationDict)
+        return True, resp['return'].strip("{}").lower()
     except Fault as err:
         return False, err
     except Exception as err:
