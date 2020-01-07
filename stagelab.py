@@ -103,11 +103,12 @@ def stageRouteGroups(ClusterNumber):
         print(err)
         return False
 
-def stagePartitions(ClusterNumber):
+def stagePartitions(AbbrevCluster):
     try:
+        partitionDict = {f'{AbbrevCluster}_Trans_PT':'Cluster Translation Partition',f'{AbbrevCluster}_DN_PT':f'{AbbrevCluster} DN Partition',f'{AbbrevCluster}_Outbound_PT':f'{AbbrevCluster} Outbound Partition',f'E911_{AbbrevCluster}_Hunt_PT':f'{AbbrevCluster} 911 Hunt Partition',f'{AbbrevCluster}_CMService_PT':f'{AbbrevCluster} Service Partition'}
         conn = AxlConnection(WSDL)
         if conn.Open():
-            result, details = BuildPartitions(conn.Service,"STAGING",f"CL{ClusterNumber}")
+            result, details = BuildPartitions(conn.Service,partitionDict)
             if not result:
                 raise Exception(details)
             return True
@@ -117,12 +118,22 @@ def stagePartitions(ClusterNumber):
         print(err)
         return False
 
-def stageCSS(ClusterNumber):
+def stageCSS(AbbrevCluster):
     try:
         conn = AxlConnection(WSDL)
-        cssNames = {f"{AbbrevCluster}_Trans_CSS":f"Cluster TransPattern CSS",f"{AbbrevCluster}_Inbound_CSS":f"Cluster Inbound Access",f"{AbbrevCluster}_Internal_CSS":f"Cluster Internal Only CSS",f"{AbbrevCluster}_Local_CSS":f"Cluster Local Dialing CSS",f"{AbbrevCluster}_LongDistance_CSS":f"Cluster Long Distance Dialing CSS",f"{AbbrevCluster}_International_CSS":f"Cluster International Dialing CSS"}
+        CssDict = {f"{AbbrevCluster}_Trans_CSS":f"Cluster TransPattern CSS",f"{AbbrevCluster}_Inbound_CSS":f"Cluster Inbound Access",f"{AbbrevCluster}_Internal_CSS":f"Cluster Internal Only CSS",f"{AbbrevCluster}_Local_CSS":f"Cluster Local Dialing CSS",f"{AbbrevCluster}_LongDistance_CSS":f"Cluster Long Distance Dialing CSS",f"{AbbrevCluster}_International_CSS":f"Cluster International Dialing CSS"}
+        MemberListofList = [
+            [
+                [f"{AbbrevCluster}_Trans_PT",f"{AbbrevCluster}_Outbound_PT",f"{AbbrevCluster}_Outbound_PT",f"E911_{AbbrevCluster}_Hunt_PT",f"{AbbrevCluster}_CMService_PT"],
+                [f"{AbbrevCluster}_DN_PT",f"E911_{AbbrevCluster}_Hunt_PT"],
+                [f"{AbbrevCluster}_Trans_PT",f"{AbbrevCluster}_Outbound_PT",f"{AbbrevCluster}_Outbound_PT"],
+                [f"{AbbrevCluster}_DN_PT"],
+                [f"{AbbrevCluster}_DN_PT",f"{AbbrevCluster}_Outbound_PT"],
+                [f"{AbbrevCluster}_DN_PT",f"{AbbrevCluster}_Outbound_PT"]
+            ]
+        ]
         if conn.Open():
-            result, details = BuildCSS(conn.Service,"STAGING",f"CL{ClusterNumber}")
+            result, details = BuildCSS(conn.Service, CssDict, MemberListofList)
             if not result:
                 raise Exception(details)
             return True
@@ -164,13 +175,13 @@ for i in range(1,4):
     else:
         print(f"Route Group List build failed for cluster {i}")
 
-    result = stagePartitions(str(i))
+    result = stagePartitions(str(f"CL{i}"))
     if result:
         print(f"Partition build successful for cluster {i}")
     else:
         print(f"Partition build failed for cluster {i}")
     
-    result = stageCSS(str(i))
+    result = stageCSS(str(f"CL{i}"))
     if result:
         print(f"Calling Search Space build successful for cluster {i}")
     else:

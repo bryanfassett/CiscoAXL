@@ -1,4 +1,4 @@
-DNRange = "1-222-333-4447 to 4469"
+DNRange = "1-222-333-4440 to 4453"
 DNRange = DNRange.replace('-','')
 NPANXX = DNRange[1:7]
 first7 = str(1) + NPANXX
@@ -7,18 +7,21 @@ prefix = DNRange[:6]
 lastDN = first7 + DNRange[-4:]
 firstDNLast5 = firstDN[-5:]
 lastDNLast5 = lastDN[-5:]
-# print(NPANXX)
-# print(prefix)
-# print(firstDN)
-# print(lastDN)
+print(NPANXX)
+print(first7)
+print(prefix)
+print(firstDN)
+print(lastDN)
+print(firstDNLast5)
+print(lastDNLast5)
 
 i = 0
 while firstDN[i] == lastDN[i]:
     i += 1
 matchinePlaces = i
-# print (matchinePlaces)
+print (matchinePlaces)
 nonMatchingPlaces = 11-i
-# print (nonMatchingPlaces)
+print (nonMatchingPlaces)
 
 # #THIS PRINTS THE 5 DIGIT TRANSPATTERN FROM A DID RANGE
 # print (f'{firstDN[i-11:]}  {lastDN[i-11:]}')
@@ -27,9 +30,9 @@ nonMatchingPlaces = 11-i
 # print(easyShortRange)
 
 noMatchStart = firstDN[i-11:]
-# print (noMatchStart)
+print (noMatchStart)
 noMatchEnd = lastDN[i-11:]
-# print(noMatchEnd)
+print(noMatchEnd)
 
 patternList = []
 noMatchDiff = int(noMatchEnd) - int(noMatchStart)

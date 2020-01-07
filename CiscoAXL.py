@@ -342,10 +342,8 @@ def setStandardLRG(conn, DevicePoolUUID, RouteGroup):
         return False, err
 
 def BuildPartitions(conn, SiteCode, AbbrevCluster):
-    if SiteCode == 'STAGING':
-        partitionNames = {f'{AbbrevCluster}_DN_PT':f'{AbbrevCluster} DN Partition',f'{AbbrevCluster}_Outbound_PT':f'{AbbrevCluster} Outbound Partition',f'E911_{AbbrevCluster}_Hunt_PT':f'{AbbrevCluster} 911 Hunt Partition',f'{AbbrevCluster}_CMService_PT':f'{AbbrevCluster} Service Partition'}
-    else:
-        partitionNames = {f'{SiteCode}_{AbbrevCluster}_Trans_PT':f'{SiteCode} Translation Partition',f'{SiteCode}_{AbbrevCluster}_Outbound_PT':f'{SiteCode} Outbound Partition',f'{SiteCode}_Park_PT':f'{SiteCode} Park Partition'}
+    # partitionNames = {f'{SiteCode}_{AbbrevCluster}_Trans_PT':f'{SiteCode} Translation Partition',f'{SiteCode}_{AbbrevCluster}_Outbound_PT':f'{SiteCode} Outbound Partition',f'{SiteCode}_Park_PT':f'{SiteCode} Park Partition'}
+    partitionNames = {}
     try:
         for partition in partitionNames:
             resp = conn.addRoutePartition(
@@ -354,53 +352,86 @@ def BuildPartitions(conn, SiteCode, AbbrevCluster):
                     'description' : f"{partitionNames[partition]}"
                 }
             )
-        partition_uuid = resp['return'].strip('{}').lower()
-            
-        return True, partition_uuid
+                
+        return True, resp['return'].strip('{}').lower()
     except Fault as err:
         return False, err
     except Exception as err:
         return False, err
 
-def BuildCSS(conn, SiteCode, AbbrevCluster):
+def BuildCSS(conn, CssDict, MemberListofList):
     try:
-        cssNames = {f"{SiteCode}_{AbbrevCluster}_Device_CSS":f"{SiteCode} Device CSS",f"{SiteCode}_{AbbrevCluster}_Trans_CSS":f"{SiteCode} DN Access"}
-        for css in cssNames:
-            resp = conn.addCss(
-                css = {
-                    'name' : css,
-                    'description' : cssNames[css]
-                }
-            )
-        css_uuid = resp['return'].strip('{}').lower()
-            
-        cssDeviceMembers = [f"{SiteCode}_{AbbrevCluster}_Trans_PT",f"{SiteCode}_{AbbrevCluster}_Outbound_PT",f"{AbbrevCluster}_Outbound_PT",f"E911_{AbbrevCluster}_Hunt_PT",f"{SiteCode}_Park_PT",f"{AbbrevCluster}_CMService_PT"]
-        for i, member in enumerate(cssDeviceMembers):
-            resp = conn.updateCss(
-                name = f"{SiteCode}_{AbbrevCluster}_Device_CSS",
-                addMembers = {
-                    'member' : {
+        for CssKeyList, MemberList in zip(CssDict.items(), MemberListofList):
+            # CssDict = {f"{SiteCode}_{AbbrevCluster}_Device_CSS":f"{SiteCode} Device CSS",f"{SiteCode}_{AbbrevCluster}_Trans_CSS":f"{SiteCode} DN Access"}
+            #MemberListofList = [
+                # [
+                #     [f"{SiteCode}_{AbbrevCluster}_Trans_PT",f"{SiteCode}_{AbbrevCluster}_Outbound_PT",f"{AbbrevCluster}_Outbound_PT",f"E911_{AbbrevCluster}_Hunt_PT",f"{SiteCode}_Park_PT",f"{AbbrevCluster}_CMService_PT"],
+                #     [f"{AbbrevCluster}_DN_PT"]
+            CssMemberList = []
+            for i, member in enumerate(MemberList):
+                CssMemberList.append(
+                    {
                         'routePartitionName' : member,
                         'index' : i+1
                     }
-                }
-            )
-        resp = conn.updateCss(
-            name = f"{SiteCode}_{AbbrevCluster}_Trans_CSS",
-            addMembers = {
-                'member' : {
-                    'routePartitionName' : f"{AbbrevCluster}_DN_PT",
-                    'index' : 1
+                )
+
+            CssDict = {
+                'name' : CssKeyList[0],
+                'description' : f"{CssDict[CssKeyList[0]]}",
+                'members' : {
+                    'member' : CssMemberList
                 }
             }
-        )
-        cssMembers_uuid = resp['return'].strip('{}').lower()
-        return True, cssMembers_uuid
-            
+            #CssDict.update({'members' : {'member' : CssMemberList}})
+            print(CssDict)  
+            resp = conn.addCss(css = CssDict)
+
+        return True, resp['return'].strip('{}').lower()
     except Fault as err:
-        return False, err
+        print(err)
     except Exception as err:
-        return False, err
+        print(err)
+
+# def BuildCSS(conn, SiteCode, AbbrevCluster):
+#     try:
+#         cssNames = {f"{SiteCode}_{AbbrevCluster}_Device_CSS":f"{SiteCode} Device CSS",f"{SiteCode}_{AbbrevCluster}_Trans_CSS":f"{SiteCode} DN Access"}
+#         for css in cssNames:
+#             resp = conn.addCss(
+#                 css = {
+#                     'name' : css,
+#                     'description' : cssNames[css]
+#                 }
+#             )
+#         css_uuid = resp['return'].strip('{}').lower()
+            
+#         cssDeviceMembers = [f"{SiteCode}_{AbbrevCluster}_Trans_PT",f"{SiteCode}_{AbbrevCluster}_Outbound_PT",f"{AbbrevCluster}_Outbound_PT",f"E911_{AbbrevCluster}_Hunt_PT",f"{SiteCode}_Park_PT",f"{AbbrevCluster}_CMService_PT"]
+#         for i, member in enumerate(cssDeviceMembers):
+#             resp = conn.updateCss(
+#                 name = f"{SiteCode}_{AbbrevCluster}_Device_CSS",
+#                 addMembers = {
+#                     'member' : {
+#                         'routePartitionName' : member,
+#                         'index' : i+1
+#                     }
+#                 }
+#             )
+#         resp = conn.updateCss(
+#             name = f"{SiteCode}_{AbbrevCluster}_Trans_CSS",
+#             addMembers = {
+#                 'member' : {
+#                     'routePartitionName' : f"{AbbrevCluster}_DN_PT",
+#                     'index' : 1
+#                 }
+#             }
+#         )
+#         cssMembers_uuid = resp['return'].strip('{}').lower()
+#         return True, cssMembers_uuid
+            
+#     except Fault as err:
+#         return False, err
+#     except Exception as err:
+#         return False, err
 
 def BuildTransPatterns(conn, SiteCode, AbbrevCluster, DNRange):
     try:

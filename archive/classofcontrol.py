@@ -49,7 +49,7 @@ def createCSSs(SiteCode, Cluster):
                 addMembers = {
                     'member' : {
                         'routePartitionName' : member,
-                        'index' : ++i
+                        'index' : i+1
                     }
                 }
             )
