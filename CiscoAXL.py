@@ -29,6 +29,7 @@ class AxlConnection:
         self.username = 'administrator'
         self.password = 'ciscopsdt'
         self.Service = None
+        self.History = None
         self.__State = False
 
     def ConnectionState(self):
@@ -42,10 +43,11 @@ class AxlConnection:
             session.verify = False #don't do this in production
             session.auth = HTTPBasicAuth(self.username, self.password)
 
-            location = 'https://{host}:8443/axl/'.format(host=self.host)
+            location = 'https://{host}:8443/axl/'.f 
             transport = Transport(cache=SqliteCache(), session=session, timeout=timeout)
-            history = HistoryPlugin()
+            history = HistoryPlugin(maxlen = 25)
             client = Client(wsdl=self.wsdl, transport=transport, plugins=[history])
+            self.History = history
 
             self.Service = client.create_service(self.binding, location)
             self.__State = True
@@ -341,15 +343,13 @@ def setStandardLRG(conn, DevicePoolUUID, RouteGroup):
     except Fault as err:
         return False, err
 
-def BuildPartitions(conn, SiteCode, AbbrevCluster):
-    # partitionNames = {f'{SiteCode}_{AbbrevCluster}_Trans_PT':f'{SiteCode} Translation Partition',f'{SiteCode}_{AbbrevCluster}_Outbound_PT':f'{SiteCode} Outbound Partition',f'{SiteCode}_Park_PT':f'{SiteCode} Park Partition'}
-    partitionNames = {}
+def BuildPartitions(conn, partitionDict):
     try:
-        for partition in partitionNames:
+        for partition in partitionDict:
             resp = conn.addRoutePartition(
                 routePartition = {
                     'name' : f"{partition}",
-                    'description' : f"{partitionNames[partition]}"
+                    'description' : f"{partitionDict[partition]}"
                 }
             )
                 
@@ -362,11 +362,6 @@ def BuildPartitions(conn, SiteCode, AbbrevCluster):
 def BuildCSS(conn, CssDict, MemberListofList):
     try:
         for CssKeyList, MemberList in zip(CssDict.items(), MemberListofList):
-            # CssDict = {f"{SiteCode}_{AbbrevCluster}_Device_CSS":f"{SiteCode} Device CSS",f"{SiteCode}_{AbbrevCluster}_Trans_CSS":f"{SiteCode} DN Access"}
-            #MemberListofList = [
-                # [
-                #     [f"{SiteCode}_{AbbrevCluster}_Trans_PT",f"{SiteCode}_{AbbrevCluster}_Outbound_PT",f"{AbbrevCluster}_Outbound_PT",f"E911_{AbbrevCluster}_Hunt_PT",f"{SiteCode}_Park_PT",f"{AbbrevCluster}_CMService_PT"],
-                #     [f"{AbbrevCluster}_DN_PT"]
             CssMemberList = []
             for i, member in enumerate(MemberList):
                 CssMemberList.append(
@@ -376,62 +371,18 @@ def BuildCSS(conn, CssDict, MemberListofList):
                     }
                 )
 
-            CssDict = {
+            CssAddDict = {
                 'name' : CssKeyList[0],
-                'description' : f"{CssDict[CssKeyList[0]]}",
-                'members' : {
-                    'member' : CssMemberList
-                }
+                'description' : f"{CssDict[CssKeyList[0]]}"
             }
-            #CssDict.update({'members' : {'member' : CssMemberList}})
-            print(CssDict)  
-            resp = conn.addCss(css = CssDict)
+            CssAddDict.update({'members' : {'member' : CssMemberList}})
+            resp = conn.addCss(css = CssAddDict)
 
         return True, resp['return'].strip('{}').lower()
     except Fault as err:
         print(err)
     except Exception as err:
         print(err)
-
-# def BuildCSS(conn, SiteCode, AbbrevCluster):
-#     try:
-#         cssNames = {f"{SiteCode}_{AbbrevCluster}_Device_CSS":f"{SiteCode} Device CSS",f"{SiteCode}_{AbbrevCluster}_Trans_CSS":f"{SiteCode} DN Access"}
-#         for css in cssNames:
-#             resp = conn.addCss(
-#                 css = {
-#                     'name' : css,
-#                     'description' : cssNames[css]
-#                 }
-#             )
-#         css_uuid = resp['return'].strip('{}').lower()
-            
-#         cssDeviceMembers = [f"{SiteCode}_{AbbrevCluster}_Trans_PT",f"{SiteCode}_{AbbrevCluster}_Outbound_PT",f"{AbbrevCluster}_Outbound_PT",f"E911_{AbbrevCluster}_Hunt_PT",f"{SiteCode}_Park_PT",f"{AbbrevCluster}_CMService_PT"]
-#         for i, member in enumerate(cssDeviceMembers):
-#             resp = conn.updateCss(
-#                 name = f"{SiteCode}_{AbbrevCluster}_Device_CSS",
-#                 addMembers = {
-#                     'member' : {
-#                         'routePartitionName' : member,
-#                         'index' : i+1
-#                     }
-#                 }
-#             )
-#         resp = conn.updateCss(
-#             name = f"{SiteCode}_{AbbrevCluster}_Trans_CSS",
-#             addMembers = {
-#                 'member' : {
-#                     'routePartitionName' : f"{AbbrevCluster}_DN_PT",
-#                     'index' : 1
-#                 }
-#             }
-#         )
-#         cssMembers_uuid = resp['return'].strip('{}').lower()
-#         return True, cssMembers_uuid
-            
-#     except Fault as err:
-#         return False, err
-#     except Exception as err:
-#         return False, err
 
 def BuildTransPatterns(conn, SiteCode, AbbrevCluster, DNRange):
     try:
@@ -450,9 +401,63 @@ def BuildTransPatterns(conn, SiteCode, AbbrevCluster, DNRange):
                 'callingSearchSpaceName' : f"{SiteCode}_{AbbrevCluster}_Trans_CSS"
             }
         )
-        transpattern_uuid = resp['return'].strip('{}').lower()
+        gatewayuuid = resp['return'].strip('{}').lower()
             
-        return True, transpattern_uuid
+        return True, gatewayuuid
+    except Fault as err:
+        return False, err
+    except Exception as err:
+        return False, err
+
+def createAnalogGateway(conn, SiteCode, AbbrevCluster, CMRG, VGType, VGQuantity, MdfFloor):
+    try:
+        unit = 'ANALOG'
+        subunit = '4FXS-MGCP'
+        if VGType == 'VG310':
+            unit = 'VG-2VWIC-MBRD'
+            subunit = '24FXS'
+        for count in range(1,int(VGQuantity) + 1):
+            resp = conn.addGateway(
+                gateway = {
+                    'domainName' : f"vgc{SiteCode}a0{MdfFloor}a0{count}.uhc.com",
+                    'description' : f"{SiteCode}_{AbbrevCluster}_{VGType}_GW{count}",
+                    'product' : VGType,
+                    'protocol' : 'MGCP',
+                    'callManagerGroupName' : CMRG,
+                    'units' : {
+                        'unit' : {
+                            'index' : 0,
+                            'product' : unit,
+                            'subunits' : {
+                                'subunit' : {
+                                    'index' : 0,
+                                    'product' : subunit
+                                }
+
+                            }
+                        }
+                    }
+                }
+            )
+        gatewayuuid = resp['return'].strip('{}').lower()
+            
+        return True, gatewayuuid
+    except Fault as err:
+        return False, err
+    except Exception as err:
+        return False, err
+
+def BuildServiceProfiles(conn, AbbrevCluster, Carrier):
+    try:
+        resp = conn.addServiceProfile(
+            routeGroup = {
+                'name' : f"SBC_{AbbrevCluster}_{Carrier}_RG",
+                'description' : "Circular",
+            }      
+        )        
+        serviceprofile_uuid = resp['return'].strip('{}').lower()
+        
+        return True, serviceprofile_uuid
     except Fault as err:
         return False, err
     except Exception as err:
