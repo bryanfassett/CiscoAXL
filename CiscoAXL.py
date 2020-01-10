@@ -447,12 +447,12 @@ def createAnalogGateway(conn, SiteCode, AbbrevCluster, CMRG, VGType, VGQuantity,
     except Exception as err:
         return False, err
 
-def BuildServiceProfiles(conn, AbbrevCluster, Carrier):
+def BuildServiceProfiles(conn):
     try:
         resp = conn.addServiceProfile(
-            routeGroup = {
-                'name' : f"SBC_{AbbrevCluster}_{Carrier}_RG",
-                'description' : "Circular",
+            addServiceProfile = {
+                'name' : f"ServiceProfileName",
+                'description' : "Description"
             }      
         )        
         serviceprofile_uuid = resp['return'].strip('{}').lower()
