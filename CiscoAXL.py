@@ -43,7 +43,7 @@ class AxlConnection:
             session.verify = False #don't do this in production
             session.auth = HTTPBasicAuth(self.username, self.password)
 
-            location = 'https://{host}:8443/axl/'.f 
+            location = 'https://{host}:8443/axl/'.format(host=self.host)
             transport = Transport(cache=SqliteCache(), session=session, timeout=timeout)
             history = HistoryPlugin(maxlen = 25)
             client = Client(wsdl=self.wsdl, transport=transport, plugins=[history])
@@ -183,50 +183,6 @@ def BuildLocation(conn, SiteCode, AbbrevCluster, CAC, VideoBandwidth = 512, Asso
     try:
         resp = conn.addLocation(location = LocationDict)
         return True, resp['return'].strip("{}").lower()
-    except Fault as err:
-        return False, err
-    except Exception as err:
-        return False, err
-
-def BuildCMRGs(conn, AbbrevCluster, groupNum):
-    try:
-        for groupLetter in ["A","B"]:
-            resp = conn.addCallManagerGroup(
-                callManagerGroup = {
-                    'name' : f"{AbbrevCluster}_CMRG_{groupNum}{groupLetter}",
-                    'members' : {
-                        'member' : {
-                            'callManagerName' : 'CM_hq-cucm-pub',
-                            'priority' : 1
-                        }
-                    }      
-                }
-            )
-        cmrg_uuid = resp['return'].strip('{}').lower()
-        
-        return True, cmrg_uuid
-    except Fault as err:
-        return False, err
-    except Exception as err:
-        return False, err
-
-# NEEDS CLEANED UP IF WE ARE GOING TO USE FOR MORE THAN STAGING
-def BuildDTGroups(conn):
-    base_DateTime_List = {'Eastern':'America/New_York','Central':'America/Chicago','Mountain':'America/Denver','Arizona':'America/Phoenix','Pacific':'America/Los_Angeles'}
-    try:
-        for key in base_DateTime_List:
-            resp = conn.addDateTimeGroup(
-                dateTimeGroup = {
-                    'name' : f"{key}",
-                    'timeZone' : f"{base_DateTime_List[key]}",
-                    'separator' : '/',
-                    'dateformat' : 'D/M/Y',
-                    'timeFormat' : '12-hour'
-                }      
-            )
-        dtGroup_uuid = resp['return'].strip('{}').lower()
-        
-        return True, dtGroup_uuid
     except Fault as err:
         return False, err
     except Exception as err:
@@ -447,17 +403,44 @@ def createAnalogGateway(conn, SiteCode, AbbrevCluster, CMRG, VGType, VGQuantity,
     except Exception as err:
         return False, err
 
-def BuildServiceProfiles(conn):
+def AddServiceProfile(AbbrevCluster, SiteCode):
     try:
-        resp = conn.addServiceProfile(
-            addServiceProfile = {
-                'name' : f"ServiceProfileName",
-                'description' : "Description"
-            }      
-        )        
-        serviceprofile_uuid = resp['return'].strip('{}').lower()
+        conn = AxlConnection(WSDL)
+        service = None
+        history = None
+
+        if conn.Open():
+            service = conn.Service
+            history = conn.History
+
+            resp = service.getServiceProfile(name = f'AAA_{AbbrevCluster}_MAC_UCService_Profile')
+            serviceProfileDict = resp['return']['serviceProfile']
+            print(serviceProfileDict)
+
+            serviceProfileDict['name'] = f'{SiteCode}_{AbbrevCluster}_MAC_UCService_Profile'
+            serviceProfileDict['description'] = f'{SiteCode} {AbbrevCluster} MAC UCService Profile'
+
+            service.addServiceProfile(serviceProfile = serviceProfileDict)
+            return True
+        else:
+            raise Exception("Error opening connection")
+    except Exception as err:
+        print(f'Exception {err}')
+        return False
         
-        return True, serviceprofile_uuid
+def BuildCallPark(conn, SiteCode, AbbrevCluster):
+    try:
+        for callParkNum in range(1,4):
+            resp = conn.addCallPark(
+                routePartition = {
+                    'pattern' : f"896{callParkNum}X",
+                    'description' : f"{SiteCode} Call Park",
+                    'routePartitionName' : f"{SiteCode}_Park_PT",
+                    'callManagerName' : f"CM_hq-cucm-pub"
+                }
+            )
+                
+        return True, resp['return'].strip('{}').lower()
     except Fault as err:
         return False, err
     except Exception as err:

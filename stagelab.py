@@ -34,11 +34,27 @@ def stageLocations(ClusterNumber):
 def stageCMRGs(ClusterNumber):
     try:
         conn = AxlConnection(WSDL)
+        service = None
+        # history = None
         if conn.Open():
-            result, details = BuildCMRGs(conn.Service, f"CL{ClusterNumber}", i)
-            if not result:
-                raise Exception(details)
-            return True
+            service = conn.Service
+            # history = conn.History
+            try:
+                for groupLetter in ["A","B"]:
+                    service.addCallManagerGroup(
+                        callManagerGroup = {
+                            'name' : f"CL{ClusterNumber}_CMRG_{groupNum}{groupLetter}",
+                            'members' : {
+                                'member' : {
+                                    'callManagerName' : 'CM_hq-cucm-pub',
+                                    'priority' : 1
+                                }
+                            }      
+                        }
+                    )
+                    groupNum = groupNum + 1
+            except Fault as err:
+                print(f'Error Inserting CMRGs: {err}')
         else:
             raise Exception("Error opening connection")
     except Exception as err:
@@ -47,17 +63,28 @@ def stageCMRGs(ClusterNumber):
 
 def stageDTGroups():
     try:
-        conn = AxlConnection(WSDL)
-        if conn.Open():
-            result, details = BuildDTGroups(conn.Service)
-            if not result:
-                raise Exception(details)
-            return True
+        conn = AxlConnection(WSDL)    
+        base_DateTime_List = {'Eastern':'America/New_York','Central':'America/Chicago','Mountain':'America/Denver','Arizona':'America/Phoenix','Pacific':'America/Los_Angeles'}
+        if service.Open():
+            service = conn.Service
+            try:
+                for key in base_DateTime_List:
+                    service.addDateTimeGroup(
+                        dateTimeGroup = {
+                            'name' : f"{key}",
+                            'timeZone' : f"{base_DateTime_List[key]}",
+                            'separator' : '/',
+                            'dateformat' : 'D/M/Y',
+                            'timeFormat' : '12-hour'
+                        }      
+                    )
+            except Fault as err:
+                print(f'Error Inserting CMRGs: {err}')
         else:
-            raise Exception("Error opening connection")
+                raise Exception("Error Opening Connection")
     except Exception as err:
-        print(err)
-        return False
+            print(err)
+            return False
 
 def stageMRGs(ClusterNumber):
     try:
@@ -143,6 +170,31 @@ def stageCSS(AbbrevCluster):
         print(err)
         return False
 
+def AddServiceProfile(AbbrevCluster, SiteCode):
+    try:
+        conn = AxlConnection(WSDL)
+        service = None
+        history = None
+
+        if conn.Open():
+            service = conn.Service
+            history = conn.History
+
+            resp = service.getServiceProfile(name = f'AAA_{AbbrevCluster}_MAC_UCService_Profile')
+            serviceProfileDict = resp['return']['serviceProfile']
+            print(serviceProfileDict)
+
+            serviceProfileDict['name'] = f'{SiteCode}_{AbbrevCluster}_MAC_UCService_Profile'
+            serviceProfileDict['description'] = f'{SiteCode} {AbbrevCluster} MAC UCService Profile'
+
+            service.addServiceProfile(serviceProfile = serviceProfileDict)
+            return True
+        else:
+            raise Exception("Error opening connection")
+    except Exception as err:
+        print(f'Exception {err}')
+        return False
+
 for i in range(1,4):
 
     result = stageRegions(str(i))
@@ -157,13 +209,19 @@ for i in range(1,4):
     else:
         print(f"E911 Location build failed for cluster {i}")
 
-    result = stageCMRGs(str(i))
+    stageCMRGs(str(i))
     if result:
         print(f"CMRG build successful for cluster {i}")
     else:
         print(f"CMRG build failed for cluster {i}")
 
     result = stageMRGs(str(i))
+    if result:
+        print(f"Resource Group build successful for cluster {i}")
+    else:
+        print(f"Resource Group build failed for cluster {i}")
+
+    result = stageMRGLs(str(i))
     if result:
         print(f"Resource Group build successful for cluster {i}")
     else:
@@ -187,7 +245,7 @@ for i in range(1,4):
     else:
         print(f"Calling Search Space build failed for cluster {i}")
 
-result = stageDTGroups()
+stageDTGroups()
 if result:
     print(f"DateTime Group build successful for cluster")
 else:
