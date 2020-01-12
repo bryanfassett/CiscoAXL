@@ -10,7 +10,7 @@ def genRangeRegex(start, end):
   if start <= 0:
     raise ValueError('only ranges of positive numbers supported')
 
-  print (f'Creating patterns for {start} to {end}.')
+  #print (f'Creating patterns for {start} to {end}.')
   if start >= end:
     return []
 
@@ -18,8 +18,8 @@ def genRangeRegex(start, end):
   digitsEnd   = str(end)
   lastDigitStart = start%10
 
-  if start//10 == (end-1)//10: # floor division to drop remainders
-    lastDigitStop = (end-1)%10 # find the remainder for the last number
+  if start//10 == (end)//10: # floor division to drop remainders
+    lastDigitStop = (end)%10 # find the remainder for the last number
     # Concatenate the last digit in the first range
     regexAll = digitsStart[:-1] + regexRangeDigits(lastDigitStart,lastDigitStop)
     return [regexAll]
@@ -36,9 +36,21 @@ def genRangeRegex(start, end):
     regexListEnd.append(regexEnd)
 
   regexListMidTrunc = genRangeRegex((start+9)//10, end//10)
-  regexListMid = [r+'X' for r in regexListMidTrunc]
+                                                                                                                                        regexListMid = [r+'X' for r in regexListMidTrunc]
 
   return regexListStart + regexListMid + regexListEnd
 
-result = genRangeRegex(55440,55568)
-print(result)
+def cleanRange(DIDRange):
+  DIDRange = DIDRange.replace('-','')
+  first7 = DIDRange[:7]
+  last4 = DIDRange[-4:]
+  cleanStart = int(DIDRange[:11])
+  cleanEnd = int(first7 + last4)
+  return cleanStart, cleanEnd
+
+cleanedList = cleanRange('1-222-333-4441 to 4519')
+result = genRangeRegex(cleanedList[0],cleanedList[1])
+patternList = str(result).replace('[0-9]','X')
+
+print(patternList)
+

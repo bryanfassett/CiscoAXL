@@ -403,19 +403,32 @@ def createAnalogGateway(conn, SiteCode, AbbrevCluster, CMRG, VGType, VGQuantity,
     except Exception as err:
         return False, err
 
-def AddServiceProfile(AbbrevCluster, SiteCode):
+def buildTransformations(conn, PatternList, SiteCode, AbbrevCluster, CarrierAbbr, DiscardType, TransformMask, Prefix):
     try:
-        conn = AxlConnection(WSDL)
-        service = None
-        history = None
+        for Pattern in PatternList:
+            resp = conn.addCallingPartyTransformationPattern(
+                callingPartyTransformationPattern = {
+                    'pattern' : Pattern,
+                    'description' : f"{SiteCode} SBC Outbound ANI", #Update this
+                    'routePartitionName' : "Global Learned E164 Numbers",# f"SBC_{AbbrevCluster}_{CarrierAbbr}_Outbound_ANI_xform_PT", #Update this
+                    'digitDiscardInstructionName' : DiscardType,
+                    'callingPartyTransformationMask' : TransformMask,
+                    'callingPartyPrefixDigits' : Prefix
+                }
+            )
+            transforminfo = resp['return'].strip('{}').lower()
+                
+        return True, transforminfo
+    except Fault as err:
+        return False, err
+    except Exception as err:
+        return False, err
 
+def AddServiceProfile(conn, AbbrevCluster, SiteCode):
+    try:
         if conn.Open():
-            service = conn.Service
-            history = conn.History
-
             resp = service.getServiceProfile(name = f'AAA_{AbbrevCluster}_MAC_UCService_Profile')
             serviceProfileDict = resp['return']['serviceProfile']
-            print(serviceProfileDict)
 
             serviceProfileDict['name'] = f'{SiteCode}_{AbbrevCluster}_MAC_UCService_Profile'
             serviceProfileDict['description'] = f'{SiteCode} {AbbrevCluster} MAC UCService Profile'
