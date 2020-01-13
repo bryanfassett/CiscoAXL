@@ -40,18 +40,19 @@ def stageCMRGs(ClusterNumber):
             service = conn.Service
             # history = conn.History
             try:
-                for groupLetter in ["A","B"]:
-                    service.addCallManagerGroup(
-                        callManagerGroup = {
-                            'name' : f"CL{ClusterNumber}_CMRG_{groupNum}{groupLetter}",
-                            'members' : {
-                                'member' : {
-                                    'callManagerName' : 'CM_hq-cucm-pub',
-                                    'priority' : 1
-                                }
-                            }      
-                        }
-                    )
+                for groupNum in range(1,4):
+                    for groupLetter in ["A","B"]:
+                        service.addCallManagerGroup(
+                            callManagerGroup = {
+                                'name' : f"CL{ClusterNumber}_CMRG_{groupNum}{groupLetter}",
+                                'members' : {
+                                    'member' : {
+                                        'callManagerName' : 'CM_hq-cucm-pub',
+                                        'priority' : 1
+                                    }
+                                }      
+                            }
+                        )
                     groupNum = groupNum + 1
             except Fault as err:
                 print(f'Error Inserting CMRGs: {err}')
@@ -91,10 +92,10 @@ def stageMRGs(ClusterNumber):
         conn = AxlConnection(WSDL)
         if conn.Open():
             for GroupNum in ["1","2"]:
-                result, details = BuildMRGs(conn.Service,f"CL{ClusterNumber}",GroupNum)
+                result, details = BuildMRGs(conn.Service,f"CL{ClusterNumber}",GroupNum, deviceName='ANN2')
                 if not result:
                     raise Exception(details)
-                return True
+            return True
         else:
             raise Exception("Error opening connection")
     except Exception as err:
@@ -151,9 +152,9 @@ def stageCSS(AbbrevCluster):
         CssDict = {f"{AbbrevCluster}_Trans_CSS":f"Cluster TransPattern CSS",f"{AbbrevCluster}_Inbound_CSS":f"Cluster Inbound Access",f"{AbbrevCluster}_Internal_CSS":f"Cluster Internal Only CSS",f"{AbbrevCluster}_Local_CSS":f"Cluster Local Dialing CSS",f"{AbbrevCluster}_LongDistance_CSS":f"Cluster Long Distance Dialing CSS",f"{AbbrevCluster}_International_CSS":f"Cluster International Dialing CSS"}
         MemberListofList = [
             [
-                [f"{AbbrevCluster}_Trans_PT",f"{AbbrevCluster}_Outbound_PT",f"{AbbrevCluster}_Outbound_PT",f"E911_{AbbrevCluster}_Hunt_PT",f"{AbbrevCluster}_CMService_PT"],
+                [f"{AbbrevCluster}_Trans_PT",f"{AbbrevCluster}_Outbound_PT",f"E911_{AbbrevCluster}_Hunt_PT",f"{AbbrevCluster}_CMService_PT"],
                 [f"{AbbrevCluster}_DN_PT",f"E911_{AbbrevCluster}_Hunt_PT"],
-                [f"{AbbrevCluster}_Trans_PT",f"{AbbrevCluster}_Outbound_PT",f"{AbbrevCluster}_Outbound_PT"],
+                [f"{AbbrevCluster}_Trans_PT",f"{AbbrevCluster}_Outbound_PT",f"{AbbrevCluster}_CMService_PT"],
                 [f"{AbbrevCluster}_DN_PT"],
                 [f"{AbbrevCluster}_DN_PT",f"{AbbrevCluster}_Outbound_PT"],
                 [f"{AbbrevCluster}_DN_PT",f"{AbbrevCluster}_Outbound_PT"]
@@ -170,30 +171,6 @@ def stageCSS(AbbrevCluster):
         print(err)
         return False
 
-def AddServiceProfile(AbbrevCluster, SiteCode):
-    try:
-        conn = AxlConnection(WSDL)
-        service = None
-        history = None
-
-        if conn.Open():
-            service = conn.Service
-            history = conn.History
-
-            resp = service.getServiceProfile(name = f'AAA_{AbbrevCluster}_MAC_UCService_Profile')
-            serviceProfileDict = resp['return']['serviceProfile']
-            print(serviceProfileDict)
-
-            serviceProfileDict['name'] = f'{SiteCode}_{AbbrevCluster}_MAC_UCService_Profile'
-            serviceProfileDict['description'] = f'{SiteCode} {AbbrevCluster} MAC UCService Profile'
-
-            service.addServiceProfile(serviceProfile = serviceProfileDict)
-            return True
-        else:
-            raise Exception("Error opening connection")
-    except Exception as err:
-        print(f'Exception {err}')
-        return False
 
 for i in range(1,4):
 
@@ -205,48 +182,48 @@ for i in range(1,4):
 
     result = stageLocations(str(i))
     if result:
-        print(f"E911 Location build successful for cluster {i}")
+        print(f"E911 Location build was successful for cluster {i}")
     else:
         print(f"E911 Location build failed for cluster {i}")
 
     stageCMRGs(str(i))
     if result:
-        print(f"CMRG build successful for cluster {i}")
+        print(f"CMRG build was successful for cluster {i}")
     else:
         print(f"CMRG build failed for cluster {i}")
 
     result = stageMRGs(str(i))
     if result:
-        print(f"Resource Group build successful for cluster {i}")
+        print(f"Resource Group build was successful for cluster {i}")
     else:
         print(f"Resource Group build failed for cluster {i}")
 
     result = stageMRGLs(str(i))
     if result:
-        print(f"Resource Group build successful for cluster {i}")
+        print(f"Resource Group List build was successful for cluster {i}")
     else:
-        print(f"Resource Group build failed for cluster {i}")
+        print(f"Resource Group List build failed for cluster {i}")
 
     result = stageRouteGroups(str(i))
     if result:
-        print(f"Route Group List build successful for cluster {i}")
+        print(f"Route Group List build was successful for cluster {i}")
     else:
         print(f"Route Group List build failed for cluster {i}")
 
     result = stagePartitions(str(f"CL{i}"))
     if result:
-        print(f"Partition build successful for cluster {i}")
+        print(f"Partition build was successful for cluster {i}")
     else:
         print(f"Partition build failed for cluster {i}")
     
     result = stageCSS(str(f"CL{i}"))
     if result:
-        print(f"Calling Search Space build successful for cluster {i}")
+        print(f"Calling Search Space build was successful for cluster {i}")
     else:
         print(f"Calling Search Space build failed for cluster {i}")
-
+    
 stageDTGroups()
 if result:
-    print(f"DateTime Group build successful for cluster")
+    print(f"DateTime Group build was successful for cluster")
 else:
     print(f"DateTime Group failed for cluster")

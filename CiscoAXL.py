@@ -188,8 +188,7 @@ def BuildLocation(conn, SiteCode, AbbrevCluster, CAC, VideoBandwidth = 512, Asso
     except Exception as err:
         return False, err
 
-# NEED TO BUILD OUT FOR xCODERS and CFBs, MEMBER CURRENTLY HARDCODED FOR LAB 
-def BuildMRGs(conn, AbbrevCluster, GroupNum):
+def BuildMRGs(conn, AbbrevCluster, GroupNum, deviceName):
     try:
         resp = conn.addMediaResourceGroup(
             mediaResourceGroup = {
@@ -198,7 +197,7 @@ def BuildMRGs(conn, AbbrevCluster, GroupNum):
                 'multicast' : 'f',
                 'members' : {
                     'member' : [{
-                        'deviceName' : 'ANN_2' 
+                        'deviceName' : deviceName 
                     }]
                 }
             }
@@ -326,7 +325,6 @@ def BuildCSS(conn, CssDict, MemberListofList):
                         'index' : i+1
                     }
                 )
-
             CssAddDict = {
                 'name' : CssKeyList[0],
                 'description' : f"{CssDict[CssKeyList[0]]}"
@@ -427,13 +425,13 @@ def buildTransformations(conn, PatternList, SiteCode, AbbrevCluster, CarrierAbbr
 def AddServiceProfile(conn, AbbrevCluster, SiteCode):
     try:
         if conn.Open():
-            resp = service.getServiceProfile(name = f'AAA_{AbbrevCluster}_MAC_UCService_Profile')
+            resp = conn.getServiceProfile(name = f'AAA_{AbbrevCluster}_MAC_UCService_Profile')
             serviceProfileDict = resp['return']['serviceProfile']
 
             serviceProfileDict['name'] = f'{SiteCode}_{AbbrevCluster}_MAC_UCService_Profile'
             serviceProfileDict['description'] = f'{SiteCode} {AbbrevCluster} MAC UCService Profile'
 
-            service.addServiceProfile(serviceProfile = serviceProfileDict)
+            conn.addServiceProfile(serviceProfile = serviceProfileDict)
             return True
         else:
             raise Exception("Error opening connection")
