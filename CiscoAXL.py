@@ -69,6 +69,28 @@ class Site:
         self.CAC = 1 
         self.TZ = "CMLocal" # TODO: value checking
         self.Carrier = "ATT" # TODO: value checking
+        ########### Kelly Added for MRG ##############
+        # self.GroupNum ="1"
+        # self.ResourceName = "ANN_2"
+        # self.PartitionDict = {f"{self.SiteCode}_{self.AbbreviatedCluster}_Outbound_PT":f"{self.SiteCode} Outbound Routing", f"{self.SiteCode}_{self.AbbreviatedCluster}_Trans_PT":f"{self.SiteCode} Intrasite Routing", f"{self.SiteCode}_Park_PT":f"{self.SiteCode} Call Park"}
+        # self.CSSDict = {f"{self.SiteCode}_{self.AbbreviatedCluster}_Device_CSS":f"{self.SiteCode} Device CSS", f"{self.SiteCode}_{self.AbbreviatedCluster}_Trans_CSS":f"{self.SiteCode} DN Access"}
+        # self.MemberListofList = [
+        #     [
+        #         f"{self.SiteCode}_{self.AbbreviatedCluster}_Trans_PT",
+        #         f"{self.SiteCode}_{self.AbbreviatedCluster}_Outbound_PT",
+        #         f"{self.AbbreviatedCluster}_Outbound_PT",
+        #         f"E911_{self.AbbreviatedCluster}_Hunt_PT",
+        #         f"{self.SiteCode}_Park_PT",
+        #         f"{self.AbbreviatedCluster}_CMService_PT"
+        #     ],
+        #     [f"{self.AbbreviatedCluster}_DN_PT"]
+        # ]
+        # self.DNRange = "5XXXX"
+        # self.VGType = vgtype
+        # self.VGQuantity = 0
+        # self.MdfFloor = 1
+        # self.PatternList = []
+        # self.DiscardType = discardType
 
     def Build(self):
         conn = AxlConnection(WSDL)
@@ -81,6 +103,26 @@ class Site:
                         BuildLocation(conn.Service, self.SiteCode, self.AbbreviatedCluster, self.CAC)
                     elif i == 3:
                         successful, data = BuildDevicePool(conn.Service, self.SiteCode, self.AbbreviatedCluster, self.CallManagerGroup, self.TZ, f"SBC_{self.AbbreviatedCluster}_{self.Carrier}_RG")
+                    # elif i == 4:
+                    #     successful, data = BuildMRGs(conn.Service, self.AbbreviatedCluster, self.GroupNum, self.ResourceName)
+                    # elif i == 5:
+                    #     successful, data = BuildMRGLs(conn.Service, self.AbbreviatedCluster)
+                    # elif i == 6:
+                    #     successful, data = BuildRouteGroups(conn.Service, self.AbbreviatedCluster, self.Carrier)
+                    # elif i == 7:
+                    #     successful, data = BuildPartitions(conn.Service, self.PartitionDict)
+                    # elif i == 8:
+                    #     successful, data = BuildCSS(conn.Service, self.CSSDict, self.MemberListofList)
+                    # elif i == 9:
+                    #     successful, data = BuildPartitions(conn.Service, self.PartitionDict)
+                    # elif i == 10:
+                    #     successful, data = BuildTransPatterns(conn.Service, self.SiteCode, self.AbbreviatedCluster, self.DNRange)#INCOMPLETE
+                    # elif i == 11:
+                    #     successful, data = createAnalogGateway(conn.Service, self.SiteCode, self.AbbreviatedCluster, self.CallManagerGroup, self.VGType, self.VGQuantity, self.MdfFloor)
+                    # elif i == 12:
+                    #     successful, data = BuildTransformations(conn.Service, self.SiteCode, self.AbbreviatedCluster, self.PatternList, self.Carrier, self.DiscardType, self.TransformMask, self.Prefix)
+                    # elif i == 13:
+                    #     successful, data = AddServiceProfile(conn.Service, self.SiteCode, self.AbbreviatedCluster, self.DNRange)
                     else:
                         break
 
@@ -107,13 +149,13 @@ class Site:
 # Non-Instanced functions below
 #
 
-def BuildRegion(conn, RegionName, AbbrevCluster, AddRegionMatrices = True):
+def BuildRegion(conn, RegionName, AbbreviatedCluster, AddRegionMatrices = True):
     try:
         resp = conn.addRegion(region={"name" : f"{RegionName}"})
         region_uuid = resp["return"].strip("{}").lower()
 
         if AddRegionMatrices:
-            result, RegionUUIDs = __getRegionUUIDs(conn, AbbrevCluster)
+            result, RegionUUIDs = __getRegionUUIDs(conn, AbbreviatedCluster)
 
             if result:
                 for region in RegionUUIDs:
@@ -127,11 +169,11 @@ def BuildRegion(conn, RegionName, AbbrevCluster, AddRegionMatrices = True):
     except Exception as err:
         return False, err
 
-def __getRegionUUIDs(conn, AbbrevCluster):
+def __getRegionUUIDs(conn, AbbreviatedCluster):
     try:
         ListUUID = []
         for region in RegionNamesList:
-            resp = conn.getRegion(name = f"{region}_{AbbrevCluster}_R")
+            resp = conn.getRegion(name = f"{region}_{AbbreviatedCluster}_R")
             ListUUID.append(resp['return']['region']['uuid'].strip("{}").lower())
         return True, ListUUID
     except Fault as err:
@@ -151,9 +193,9 @@ def addRegionMatrix(conn, Aregionuuid, Bregionuuid):
     except Fault as err:
         return False, err
 
-def BuildLocation(conn, SiteCode, AbbrevCluster, CAC, VideoBandwidth = 512, AssociateE911 = True):
+def BuildLocation(conn, SiteCode, AbbreviatedCluster, CAC, VideoBandwidth = 512, AssociateE911 = True):
     LocationDict = {
-        'name' : f"{SiteCode}_{AbbrevCluster}_L",
+        'name' : f"{SiteCode}_{AbbreviatedCluster}_L",
         'withinAudioBandwidth' : 0,
         'withinVideoBandwidth' : 0,
         'withinImmersiveKbits' : 0
@@ -171,7 +213,7 @@ def BuildLocation(conn, SiteCode, AbbrevCluster, CAC, VideoBandwidth = 512, Asso
     if AssociateE911:
         BetweenLocationList.append(
             {
-                'locationName' : f"E911_{AbbrevCluster}_L",
+                'locationName' : f"E911_{AbbreviatedCluster}_L",
                 'weight' : 50,
                 'audioBandwidth' : 999999,
                 'videoBandwidth' : 384,
@@ -188,16 +230,16 @@ def BuildLocation(conn, SiteCode, AbbrevCluster, CAC, VideoBandwidth = 512, Asso
     except Exception as err:
         return False, err
 
-def BuildMRGs(conn, AbbrevCluster, GroupNum, deviceName):
+def BuildMRGs(conn, AbbreviatedCluster, GroupNum, ResourceName):
     try:
         resp = conn.addMediaResourceGroup(
             mediaResourceGroup = {
-                'name' : f"{AbbrevCluster}_Hardware_MRG_{GroupNum}",
-                'description' : f"{AbbrevCluster}_Hardware_MRG_{GroupNum}",
+                'name' : f"{AbbreviatedCluster}_Hardware_MRG_{GroupNum}",
+                'description' : f"{AbbreviatedCluster}_Hardware_MRG_{GroupNum}",
                 'multicast' : 'f',
                 'members' : {
                     'member' : [{
-                        'deviceName' : deviceName 
+                        'deviceName' : ResourceName 
                     }]
                 }
             }
@@ -210,14 +252,14 @@ def BuildMRGs(conn, AbbrevCluster, GroupNum, deviceName):
     except Exception as err:
         return False, err
         
-def BuildMRGLs(conn, AbbrevCluster):
+def BuildMRGLs(conn, AbbreviatedCluster):
     try:
         resp = conn.addMediaResourceList(
             mediaResourceList = {
-                'name' : f"RemoteSite_{AbbrevCluster}_MRGL",
+                'name' : f"RemoteSite_{AbbreviatedCluster}_MRGL",
                 'members' : {
                     'member' : {
-                        'mediaResourceGroupName' : f"{AbbrevCluster}_Hardware_MRG_1",
+                        'mediaResourceGroupName' : f"{AbbreviatedCluster}_Hardware_MRG_1",
                         'order' : 1
                     }   
                 }
@@ -231,11 +273,11 @@ def BuildMRGLs(conn, AbbrevCluster):
     except Exception as err:
         return False, err
 
-def BuildRouteGroups(conn, AbbrevCluster, Carrier):
+def BuildRouteGroups(conn, AbbreviatedCluster, Carrier):
     try:
         resp = conn.addRouteGroup(
             routeGroup = {
-                'name' : f"SBC_{AbbrevCluster}_{Carrier}_RG",
+                'name' : f"SBC_{AbbreviatedCluster}_{Carrier}_RG",
                 'distributionAlgorithm' : "Circular",
                 'members' : {
                     'member' : {
@@ -254,17 +296,17 @@ def BuildRouteGroups(conn, AbbrevCluster, Carrier):
     except Exception as err:
         return False, err
    
-def BuildDevicePool(conn, SiteCode, AbbrevCluster, CMRG, TZ, StandardLRG = None):
+def BuildDevicePool(conn, SiteCode, AbbreviatedCluster, CMRG, TZ, StandardLRG = None):
     try: 
         resp = conn.addDevicePool(
             devicePool = {
-                "name" : f"{SiteCode}_{AbbrevCluster}_DP1",
+                "name" : f"{SiteCode}_{AbbreviatedCluster}_DP1",
                 "dateTimeSettingName" : TZ,
-                'callManagerGroupName' : f"{AbbrevCluster}_CMRG_{CMRG}",
-                'mediaResourceListName' : f'{SiteCode}_{AbbrevCluster}_MRGL',
-                'regionName' : f'{SiteCode}_{AbbrevCluster}_R',
+                'callManagerGroupName' : f"{AbbreviatedCluster}_CMRG_{CMRG}",
+                'mediaResourceListName' : f'{SiteCode}_{AbbreviatedCluster}_MRGL',
+                'regionName' : f'{SiteCode}_{AbbreviatedCluster}_R',
                 'srstName' : 'Disable',
-                'locationName' : f'{SiteCode}_{AbbrevCluster}_L'
+                'locationName' : f'{SiteCode}_{AbbreviatedCluster}_L'
             }
         )
         devicepool_uuid = resp['return'].strip('{}').lower()
@@ -298,13 +340,13 @@ def setStandardLRG(conn, DevicePoolUUID, RouteGroup):
     except Fault as err:
         return False, err
 
-def BuildPartitions(conn, partitionDict):
+def BuildPartitions(conn, PartitionDict):
     try:
-        for partition in partitionDict:
+        for partition in PartitionDict:
             resp = conn.addRoutePartition(
                 routePartition = {
                     'name' : f"{partition}",
-                    'description' : f"{partitionDict[partition]}"
+                    'description' : f"{PartitionDict[partition]}"
                 }
             )
                 
@@ -338,21 +380,22 @@ def BuildCSS(conn, CssDict, MemberListofList):
     except Exception as err:
         print(err)
 
-def BuildTransPatterns(conn, SiteCode, AbbrevCluster, DNRange):
+# NEED TO BUILD THE ADDITIONAL PARAMETERS AND ALSO CONVERT TO USE LISTS/DICTIONARIES TO HANDLE 5DIGIT, +e164, AND 9. PATTERNS
+def BuildTransPatterns(conn, SiteCode, AbbreviatedCluster, DNRange):
     try:
-        pattern = "5XXXX"# DN Range Calculation goes here
+        Pattern = "5XXXX"# DN Range Calculation goes here
         prefixDigits = "111114"
         resp = conn.addTransPattern(
             transPattern = {
-                'pattern' : pattern,
+                'pattern' : Pattern,
                 'description' : f"{SiteCode} Incoming for {DNRange}",
                 'usage' : 'Translation',
-                'routePartitionName' : f"{SiteCode}_{AbbrevCluster}_Trans_PT",
+                'routePartitionName' : f"{SiteCode}_{AbbreviatedCluster}_Trans_PT",
                 'useCallingPartyPhoneMask' : "On",
                 'patternUrgency' : True,
                 'prefixDigitsOut' : prefixDigits,#string
                 'provideOutsideDialtone' : False,
-                'callingSearchSpaceName' : f"{SiteCode}_{AbbrevCluster}_Trans_CSS"
+                'callingSearchSpaceName' : f"{SiteCode}_{AbbreviatedCluster}_Trans_CSS"
             }
         )
         gatewayuuid = resp['return'].strip('{}').lower()
@@ -363,7 +406,7 @@ def BuildTransPatterns(conn, SiteCode, AbbrevCluster, DNRange):
     except Exception as err:
         return False, err
 
-def createAnalogGateway(conn, SiteCode, AbbrevCluster, CMRG, VGType, VGQuantity, MdfFloor):
+def createAnalogGateway(conn, SiteCode, AbbreviatedCluster, CMRG, VGType, VGQuantity, MdfFloor):
     try:
         unit = 'ANALOG'
         subunit = '4FXS-MGCP'
@@ -374,7 +417,7 @@ def createAnalogGateway(conn, SiteCode, AbbrevCluster, CMRG, VGType, VGQuantity,
             resp = conn.addGateway(
                 gateway = {
                     'domainName' : f"vgc{SiteCode}a0{MdfFloor}a0{count}.uhc.com",
-                    'description' : f"{SiteCode}_{AbbrevCluster}_{VGType}_GW{count}",
+                    'description' : f"{SiteCode}_{AbbreviatedCluster}_{VGType}_GW{count}",
                     'product' : VGType,
                     'protocol' : 'MGCP',
                     'callManagerGroupName' : CMRG,
@@ -401,14 +444,14 @@ def createAnalogGateway(conn, SiteCode, AbbrevCluster, CMRG, VGType, VGQuantity,
     except Exception as err:
         return False, err
 
-def buildTransformations(conn, PatternList, SiteCode, AbbrevCluster, CarrierAbbr, DiscardType, TransformMask, Prefix):
+def buildTransformations(conn, SiteCode, AbbreviatedCluster, PatternList, CarrierAbbr, DiscardType, TransformMask, Prefix):
     try:
         for Pattern in PatternList:
             resp = conn.addCallingPartyTransformationPattern(
                 callingPartyTransformationPattern = {
                     'pattern' : Pattern,
                     'description' : f"{SiteCode} SBC Outbound ANI", #Update this
-                    'routePartitionName' : "Global Learned E164 Numbers",# f"SBC_{AbbrevCluster}_{CarrierAbbr}_Outbound_ANI_xform_PT", #Update this
+                    'routePartitionName' : "Global Learned E164 Numbers",# f"SBC_{AbbreviatedCluster}_{CarrierAbbr}_Outbound_ANI_xform_PT", #Update this
                     'digitDiscardInstructionName' : DiscardType,
                     'callingPartyTransformationMask' : TransformMask,
                     'callingPartyPrefixDigits' : Prefix
@@ -422,14 +465,14 @@ def buildTransformations(conn, PatternList, SiteCode, AbbrevCluster, CarrierAbbr
     except Exception as err:
         return False, err
 
-def AddServiceProfile(conn, AbbrevCluster, SiteCode):
+def AddServiceProfile(conn, SiteCode, AbbreviatedCluster):
     try:
         if conn.Open():
-            resp = conn.getServiceProfile(name = f'AAA_{AbbrevCluster}_MAC_UCService_Profile')
+            resp = conn.getServiceProfile(name = f'AAA_{AbbreviatedCluster}_MAC_UCService_Profile')
             serviceProfileDict = resp['return']['serviceProfile']
 
-            serviceProfileDict['name'] = f'{SiteCode}_{AbbrevCluster}_MAC_UCService_Profile'
-            serviceProfileDict['description'] = f'{SiteCode} {AbbrevCluster} MAC UCService Profile'
+            serviceProfileDict['name'] = f'{SiteCode}_{AbbreviatedCluster}_MAC_UCService_Profile'
+            serviceProfileDict['description'] = f'{SiteCode} {AbbreviatedCluster} MAC UCService Profile'
 
             conn.addServiceProfile(serviceProfile = serviceProfileDict)
             return True
@@ -439,7 +482,7 @@ def AddServiceProfile(conn, AbbrevCluster, SiteCode):
         print(f'Exception {err}')
         return False
         
-def BuildCallPark(conn, SiteCode, AbbrevCluster):
+def BuildCallPark(conn, SiteCode, AbbreviatedCluster):
     try:
         for callParkNum in range(1,4):
             resp = conn.addCallPark(

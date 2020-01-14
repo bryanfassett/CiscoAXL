@@ -64,10 +64,11 @@ def stageCMRGs(ClusterNumber):
 
 def stageDTGroups():
     try:
-        conn = AxlConnection(WSDL)    
-        base_DateTime_List = {'Eastern':'America/New_York','Central':'America/Chicago','Mountain':'America/Denver','Arizona':'America/Phoenix','Pacific':'America/Los_Angeles'}
-        if service.Open():
+        conn = AxlConnection(WSDL)
+        service = None    
+        if conn.Open():
             service = conn.Service
+            base_DateTime_List = {'Eastern':'America/New_York','Central':'America/Chicago','Mountain':'America/Denver','Arizona':'America/Phoenix','Pacific':'America/Los_Angeles'}
             try:
                 for key in base_DateTime_List:
                     service.addDateTimeGroup(
@@ -82,7 +83,7 @@ def stageDTGroups():
             except Fault as err:
                 print(f'Error Inserting CMRGs: {err}')
         else:
-                raise Exception("Error Opening Connection")
+            raise Exception("Error Opening Connection")
     except Exception as err:
             print(err)
             return False
@@ -92,7 +93,7 @@ def stageMRGs(ClusterNumber):
         conn = AxlConnection(WSDL)
         if conn.Open():
             for GroupNum in ["1","2"]:
-                result, details = BuildMRGs(conn.Service,f"CL{ClusterNumber}",GroupNum, deviceName='ANN2')
+                result, details = BuildMRGs(conn.Service,f"CL{ClusterNumber}",GroupNum, ResourceName='ANN_2')
                 if not result:
                     raise Exception(details)
             return True
@@ -124,7 +125,7 @@ def stageRouteGroups(ClusterNumber):
                 result, details = BuildRouteGroups(conn.Service,f"CL{ClusterNumber}",Carrier)
                 if not result:
                     raise Exception(details)
-                return True
+            return True
         else:
             raise Exception("Error opening connection")
     except Exception as err:
@@ -222,7 +223,4 @@ for i in range(1,4):
         print(f"Calling Search Space build failed for cluster {i}")
     
 stageDTGroups()
-if result:
-    print(f"DateTime Group build was successful for cluster")
-else:
-    print(f"DateTime Group failed for cluster")
+print(f"DateTime Group failed for cluster")
