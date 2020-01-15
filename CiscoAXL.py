@@ -8,6 +8,7 @@ from requests.auth import HTTPBasicAuth
 from urllib3 import disable_warnings
 from urllib3.exceptions import InsecureRequestWarning
 from lxml import etree
+import os
 
 #
 # Config
@@ -18,9 +19,13 @@ WSDL = r'file://C:/Users/kllyh/Documents/GitHub/CiscoAXL/axlsqltoolkit/schema/cu
 
 
 #
+# Variables
+#
+WSDL = f"file:\\\{os.path.dirname(os.path.realpath(__file__))}{WSDL}"
+
+#
 # Classes
 #
-
 class AxlConnection:
     def __init__(self, wsdlpath):
         self.wsdl = wsdlpath
