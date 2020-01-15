@@ -40,11 +40,11 @@ def stageCMRGs(ClusterNumber):
             service = conn.Service
             # history = conn.History
             try:
-                for groupNum in range(1,4):
+                for CallManagerGroup in range(1,4):
                     for groupLetter in ["A","B"]:
                         service.addCallManagerGroup(
                             callManagerGroup = {
-                                'name' : f"CL{ClusterNumber}_CMRG_{groupNum}{groupLetter}",
+                                'name' : f"CL{ClusterNumber}_CMRG_{CallManagerGroup}{groupLetter}",
                                 'members' : {
                                     'member' : {
                                         'callManagerName' : 'CM_hq-cucm-pub',
@@ -53,7 +53,7 @@ def stageCMRGs(ClusterNumber):
                                 }      
                             }
                         )
-                    groupNum = groupNum + 1
+                    CallManagerGroup = CallManagerGroup + 1
             except Fault as err:
                 print(f'Error Inserting CMRGs: {err}')
         else:
@@ -92,8 +92,8 @@ def stageMRGs(ClusterNumber):
     try:
         conn = AxlConnection(WSDL)
         if conn.Open():
-            for GroupNum in ["1","2"]:
-                result, details = BuildMRGs(conn.Service,f"CL{ClusterNumber}",GroupNum, ResourceName='ANN_2')
+            for CallManagerGroup in ["1","2"]:
+                result, details = BuildMRGs(conn.Service,f"CL{ClusterNumber}",CallManagerGroup, ResourceName='ANN_2')
                 if not result:
                     raise Exception(details)
             return True

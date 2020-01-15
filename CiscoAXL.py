@@ -70,27 +70,29 @@ class Site:
         self.TZ = "CMLocal" # TODO: value checking
         self.Carrier = "ATT" # TODO: value checking
         ########### Kelly Added for MRG ##############
-        # self.GroupNum ="1"
-        # self.ResourceName = "ANN_2"
-        # self.PartitionDict = {f"{self.SiteCode}_{self.AbbreviatedCluster}_Outbound_PT":f"{self.SiteCode} Outbound Routing", f"{self.SiteCode}_{self.AbbreviatedCluster}_Trans_PT":f"{self.SiteCode} Intrasite Routing", f"{self.SiteCode}_Park_PT":f"{self.SiteCode} Call Park"}
-        # self.CSSDict = {f"{self.SiteCode}_{self.AbbreviatedCluster}_Device_CSS":f"{self.SiteCode} Device CSS", f"{self.SiteCode}_{self.AbbreviatedCluster}_Trans_CSS":f"{self.SiteCode} DN Access"}
-        # self.MemberListofList = [
-        #     [
-        #         f"{self.SiteCode}_{self.AbbreviatedCluster}_Trans_PT",
-        #         f"{self.SiteCode}_{self.AbbreviatedCluster}_Outbound_PT",
-        #         f"{self.AbbreviatedCluster}_Outbound_PT",
-        #         f"E911_{self.AbbreviatedCluster}_Hunt_PT",
-        #         f"{self.SiteCode}_Park_PT",
-        #         f"{self.AbbreviatedCluster}_CMService_PT"
-        #     ],
-        #     [f"{self.AbbreviatedCluster}_DN_PT"]
-        # ]
-        # self.DNRange = "5XXXX"
-        # self.VGType = vgtype
-        # self.VGQuantity = 0
-        # self.MdfFloor = 1
-        # self.PatternList = []
-        # self.DiscardType = discardType
+        self.CallManagerGroup ="1"
+        self.ResourceName = "ANN_2"
+        self.PartitionDict = {f"{self.SiteCode}_{self.AbbreviatedCluster}_Outbound_PT":f"{self.SiteCode} Outbound Routing", f"{self.SiteCode}_{self.AbbreviatedCluster}_Trans_PT":f"{self.SiteCode} Intrasite Routing", f"{self.SiteCode}_Park_PT":f"{self.SiteCode} Call Park"}
+        self.CSSDict = {f"{self.SiteCode}_{self.AbbreviatedCluster}_Device_CSS":f"{self.SiteCode} Device CSS", f"{self.SiteCode}_{self.AbbreviatedCluster}_Trans_CSS":f"{self.SiteCode} DN Access"}
+        self.MemberListofList = [
+            [
+                f"{self.SiteCode}_{self.AbbreviatedCluster}_Trans_PT",
+                f"{self.SiteCode}_{self.AbbreviatedCluster}_Outbound_PT",
+                f"{self.AbbreviatedCluster}_Outbound_PT",
+                f"E911_{self.AbbreviatedCluster}_Hunt_PT",
+                f"{self.SiteCode}_Park_PT",
+                f"{self.AbbreviatedCluster}_CMService_PT"
+            ],
+            [f"{self.AbbreviatedCluster}_DN_PT"]
+        ]
+        self.DNRange = "5XXXX"
+        self.VGType = ""
+        self.VGQuantity = 0
+        self.MdfFloor = 1
+        self.PatternList = []
+        self.DiscardType = ""
+        self.TransformMask = ""
+        self.Prefix = ""
 
     def Build(self):
         conn = AxlConnection(WSDL)
@@ -103,26 +105,28 @@ class Site:
                         BuildLocation(conn.Service, self.SiteCode, self.AbbreviatedCluster, self.CAC)
                     elif i == 3:
                         successful, data = BuildDevicePool(conn.Service, self.SiteCode, self.AbbreviatedCluster, self.CallManagerGroup, self.TZ, f"SBC_{self.AbbreviatedCluster}_{self.Carrier}_RG")
-                    # elif i == 4:
-                    #     successful, data = BuildMRGs(conn.Service, self.AbbreviatedCluster, self.GroupNum, self.ResourceName)
-                    # elif i == 5:
-                    #     successful, data = BuildMRGLs(conn.Service, self.AbbreviatedCluster)
-                    # elif i == 6:
-                    #     successful, data = BuildRouteGroups(conn.Service, self.AbbreviatedCluster, self.Carrier)
-                    # elif i == 7:
-                    #     successful, data = BuildPartitions(conn.Service, self.PartitionDict)
-                    # elif i == 8:
-                    #     successful, data = BuildCSS(conn.Service, self.CSSDict, self.MemberListofList)
-                    # elif i == 9:
-                    #     successful, data = BuildPartitions(conn.Service, self.PartitionDict)
-                    # elif i == 10:
-                    #     successful, data = BuildTransPatterns(conn.Service, self.SiteCode, self.AbbreviatedCluster, self.DNRange)#INCOMPLETE
-                    # elif i == 11:
-                    #     successful, data = createAnalogGateway(conn.Service, self.SiteCode, self.AbbreviatedCluster, self.CallManagerGroup, self.VGType, self.VGQuantity, self.MdfFloor)
-                    # elif i == 12:
-                    #     successful, data = BuildTransformations(conn.Service, self.SiteCode, self.AbbreviatedCluster, self.PatternList, self.Carrier, self.DiscardType, self.TransformMask, self.Prefix)
-                    # elif i == 13:
-                    #     successful, data = AddServiceProfile(conn.Service, self.SiteCode, self.AbbreviatedCluster, self.DNRange)
+                    elif i == 4:
+                        successful, data = BuildMRGs(conn.Service, self.AbbreviatedCluster, self.CallManagerGroup, self.ResourceName)
+                    elif i == 5:
+                        successful, data = BuildMRGLs(conn.Service, self.AbbreviatedCluster)
+                    elif i == 6:
+                        successful, data = BuildRouteGroups(conn.Service, self.AbbreviatedCluster, self.Carrier)
+                    elif i == 7:
+                        successful, data = BuildPartitions(conn.Service, self.PartitionDict)
+                    elif i == 8:
+                        successful, data = BuildCSS(conn.Service, self.CSSDict, self.MemberListofList)
+                    elif i == 9:
+                        successful, data = BuildPartitions(conn.Service, self.PartitionDict)
+                    elif i == 10:
+                        successful, data = BuildTransPatterns(conn.Service, self.SiteCode, self.AbbreviatedCluster, self.DNRange)#INCOMPLETE
+                    elif i == 11:
+                        successful, data = createAnalogGateway(conn.Service, self.SiteCode, self.AbbreviatedCluster, self.CallManagerGroup, self.VGType, self.VGQuantity, self.MdfFloor)
+                    elif i == 12:
+                        successful, data = buildTransformations(conn.Service, self.SiteCode, self.AbbreviatedCluster, self.PatternList, self.Carrier, self.DiscardType, self.TransformMask, self.Prefix)
+                    elif i == 13:
+                        successful, data = AddServiceProfile(conn.Service, self.SiteCode, self.AbbreviatedCluster)
+                    elif i == 14:
+                        successful, data = BuildCallPark(conn.Service, self.SiteCode, self.AbbreviatedCluster)
                     else:
                         break
 
@@ -230,12 +234,12 @@ def BuildLocation(conn, SiteCode, AbbreviatedCluster, CAC, VideoBandwidth = 512,
     except Exception as err:
         return False, err
 
-def BuildMRGs(conn, AbbreviatedCluster, GroupNum, ResourceName):
+def BuildMRGs(conn, AbbreviatedCluster, CallManagerGroup, ResourceName):
     try:
         resp = conn.addMediaResourceGroup(
             mediaResourceGroup = {
-                'name' : f"{AbbreviatedCluster}_Hardware_MRG_{GroupNum}",
-                'description' : f"{AbbreviatedCluster}_Hardware_MRG_{GroupNum}",
+                'name' : f"{AbbreviatedCluster}_Hardware_MRG_{CallManagerGroup}",
+                'description' : f"{AbbreviatedCluster}_Hardware_MRG_{CallManagerGroup}",
                 'multicast' : 'f',
                 'members' : {
                     'member' : [{
@@ -444,7 +448,7 @@ def createAnalogGateway(conn, SiteCode, AbbreviatedCluster, CMRG, VGType, VGQuan
     except Exception as err:
         return False, err
 
-def buildTransformations(conn, SiteCode, AbbreviatedCluster, PatternList, CarrierAbbr, DiscardType, TransformMask, Prefix):
+def buildTransformations(conn, SiteCode, AbbreviatedCluster, PatternList, Carrier, DiscardType, TransformMask, Prefix):
     try:
         for Pattern in PatternList:
             resp = conn.addCallingPartyTransformationPattern(
@@ -484,7 +488,7 @@ def AddServiceProfile(conn, SiteCode, AbbreviatedCluster):
         
 def BuildCallPark(conn, SiteCode, AbbreviatedCluster):
     try:
-        for callParkNum in range(1,4):
+        for callParkNum in range(0,4):
             resp = conn.addCallPark(
                 routePartition = {
                     'pattern' : f"896{callParkNum}X",
