@@ -15,7 +15,7 @@ import os
 #
 
 RegionNamesList = ["SBC","BROADCAST"]
-WSDL = r'\axlsqltoolkit\schema\current\AXLAPI.wsdl'
+WSDL = r'file://C:/Users/kllyh/Documents/GitHub/CiscoAXL/axlsqltoolkit/schema/current/AXLAPI.wsdl'
 
 
 #
@@ -34,6 +34,7 @@ class AxlConnection:
         self.username = 'administrator'
         self.password = 'ciscopsdt'
         self.Service = None
+        self.History = None
         self.__State = False
 
     def ConnectionState(self):
@@ -49,8 +50,9 @@ class AxlConnection:
 
             location = 'https://{host}:8443/axl/'.format(host=self.host)
             transport = Transport(cache=SqliteCache(), session=session, timeout=timeout)
-            history = HistoryPlugin()
+            history = HistoryPlugin(maxlen = 25)
             client = Client(wsdl=self.wsdl, transport=transport, plugins=[history])
+            self.History = history
 
             self.Service = client.create_service(self.binding, location)
             self.__State = True
@@ -72,6 +74,30 @@ class Site:
         self.CAC = 1 
         self.TZ = "CMLocal" # TODO: value checking
         self.Carrier = "ATT" # TODO: value checking
+        ########### Kelly Added for MRG ##############
+        self.CallManagerGroup ="1"
+        self.ResourceName = "ANN_2"
+        self.PartitionDict = {f"{self.SiteCode}_{self.AbbreviatedCluster}_Outbound_PT":f"{self.SiteCode} Outbound Routing", f"{self.SiteCode}_{self.AbbreviatedCluster}_Trans_PT":f"{self.SiteCode} Intrasite Routing", f"{self.SiteCode}_Park_PT":f"{self.SiteCode} Call Park"}
+        self.CSSDict = {f"{self.SiteCode}_{self.AbbreviatedCluster}_Device_CSS":f"{self.SiteCode} Device CSS", f"{self.SiteCode}_{self.AbbreviatedCluster}_Trans_CSS":f"{self.SiteCode} DN Access"}
+        self.MemberListofList = [
+            [
+                f"{self.SiteCode}_{self.AbbreviatedCluster}_Trans_PT",
+                f"{self.SiteCode}_{self.AbbreviatedCluster}_Outbound_PT",
+                f"{self.AbbreviatedCluster}_Outbound_PT",
+                f"E911_{self.AbbreviatedCluster}_Hunt_PT",
+                f"{self.SiteCode}_Park_PT",
+                f"{self.AbbreviatedCluster}_CMService_PT"
+            ],
+            [f"{self.AbbreviatedCluster}_DN_PT"]
+        ]
+        self.DNRange = "5XXXX"
+        self.VGType = ""
+        self.VGQuantity = 0
+        self.MdfFloor = 1
+        self.PatternList = []
+        self.DiscardType = ""
+        self.TransformMask = ""
+        self.Prefix = ""
 
     def Build(self):
         conn = AxlConnection(WSDL)
@@ -84,6 +110,28 @@ class Site:
                         BuildLocation(conn.Service, self.SiteCode, self.AbbreviatedCluster, self.CAC)
                     elif i == 3:
                         successful, data = BuildDevicePool(conn.Service, self.SiteCode, self.AbbreviatedCluster, self.CallManagerGroup, self.TZ, f"SBC_{self.AbbreviatedCluster}_{self.Carrier}_RG")
+                    elif i == 4:
+                        successful, data = BuildMRGs(conn.Service, self.AbbreviatedCluster, self.CallManagerGroup, self.ResourceName)
+                    elif i == 5:
+                        successful, data = BuildMRGLs(conn.Service, self.AbbreviatedCluster)
+                    elif i == 6:
+                        successful, data = BuildRouteGroups(conn.Service, self.AbbreviatedCluster, self.Carrier)
+                    elif i == 7:
+                        successful, data = BuildPartitions(conn.Service, self.PartitionDict)
+                    elif i == 8:
+                        successful, data = BuildCSS(conn.Service, self.CSSDict, self.MemberListofList)
+                    elif i == 9:
+                        successful, data = BuildPartitions(conn.Service, self.PartitionDict)
+                    elif i == 10:
+                        successful, data = BuildTransPatterns(conn.Service, self.SiteCode, self.AbbreviatedCluster, self.DNRange)#INCOMPLETE
+                    elif i == 11:
+                        successful, data = createAnalogGateway(conn.Service, self.SiteCode, self.AbbreviatedCluster, self.CallManagerGroup, self.VGType, self.VGQuantity, self.MdfFloor)
+                    elif i == 12:
+                        successful, data = buildTransformations(conn.Service, self.SiteCode, self.AbbreviatedCluster, self.PatternList, self.Carrier, self.DiscardType, self.TransformMask, self.Prefix)
+                    elif i == 13:
+                        successful, data = AddServiceProfile(conn.Service, self.SiteCode, self.AbbreviatedCluster)
+                    elif i == 14:
+                        successful, data = BuildCallPark(conn.Service, self.SiteCode, self.AbbreviatedCluster)
                     else:
                         break
 
@@ -110,13 +158,13 @@ class Site:
 # Non-Instanced functions below
 #
 
-def BuildRegion(conn, RegionName, AbbrevCluster, AddRegionMatrices = True):
+def BuildRegion(conn, RegionName, AbbreviatedCluster, AddRegionMatrices = True):
     try:
         resp = conn.addRegion(region={"name" : f"{RegionName}"})
         region_uuid = resp["return"].strip("{}").lower()
 
         if AddRegionMatrices:
-            result, RegionUUIDs = __getRegionUUIDs(conn, AbbrevCluster)
+            result, RegionUUIDs = __getRegionUUIDs(conn, AbbreviatedCluster)
 
             if result:
                 for region in RegionUUIDs:
@@ -130,11 +178,11 @@ def BuildRegion(conn, RegionName, AbbrevCluster, AddRegionMatrices = True):
     except Exception as err:
         return False, err
 
-def __getRegionUUIDs(conn, AbbrevCluster):
+def __getRegionUUIDs(conn, AbbreviatedCluster):
     try:
         ListUUID = []
         for region in RegionNamesList:
-            resp = conn.getRegion(name = f"{region}_{AbbrevCluster}_R")
+            resp = conn.getRegion(name = f"{region}_{AbbreviatedCluster}_R")
             ListUUID.append(resp['return']['region']['uuid'].strip("{}").lower())
         return True, ListUUID
     except Fault as err:
@@ -154,9 +202,9 @@ def addRegionMatrix(conn, Aregionuuid, Bregionuuid):
     except Fault as err:
         return False, err
 
-def BuildLocation(conn, SiteCode, AbbrevCluster, CAC, VideoBandwidth = 512, AssociateE911 = True):
+def BuildLocation(conn, SiteCode, AbbreviatedCluster, CAC, VideoBandwidth = 512, AssociateE911 = True):
     LocationDict = {
-        'name' : f"{SiteCode}_{AbbrevCluster}_L",
+        'name' : f"{SiteCode}_{AbbreviatedCluster}_L",
         'withinAudioBandwidth' : 0,
         'withinVideoBandwidth' : 0,
         'withinImmersiveKbits' : 0
@@ -174,7 +222,7 @@ def BuildLocation(conn, SiteCode, AbbrevCluster, CAC, VideoBandwidth = 512, Asso
     if AssociateE911:
         BetweenLocationList.append(
             {
-                'locationName' : f"E911_{AbbrevCluster}_L",
+                'locationName' : f"E911_{AbbreviatedCluster}_L",
                 'weight' : 50,
                 'audioBandwidth' : 999999,
                 'videoBandwidth' : 384,
@@ -191,17 +239,83 @@ def BuildLocation(conn, SiteCode, AbbrevCluster, CAC, VideoBandwidth = 512, Asso
     except Exception as err:
         return False, err
 
-def BuildDevicePool(conn, SiteCode, AbbrevCluster, CMRG, TZ, StandardLRG = None):
+def BuildMRGs(conn, AbbreviatedCluster, CallManagerGroup, ResourceName):
+    try:
+        resp = conn.addMediaResourceGroup(
+            mediaResourceGroup = {
+                'name' : f"{AbbreviatedCluster}_Hardware_MRG_{CallManagerGroup}",
+                'description' : f"{AbbreviatedCluster}_Hardware_MRG_{CallManagerGroup}",
+                'multicast' : 'f',
+                'members' : {
+                    'member' : [{
+                        'deviceName' : ResourceName 
+                    }]
+                }
+            }
+        )      
+        mrg_uuid = resp['return'].strip('{}').lower()
+
+        return True, mrg_uuid
+    except Fault as err:
+        return False, err
+    except Exception as err:
+        return False, err
+        
+def BuildMRGLs(conn, AbbreviatedCluster):
+    try:
+        resp = conn.addMediaResourceList(
+            mediaResourceList = {
+                'name' : f"RemoteSite_{AbbreviatedCluster}_MRGL",
+                'members' : {
+                    'member' : {
+                        'mediaResourceGroupName' : f"{AbbreviatedCluster}_Hardware_MRG_1",
+                        'order' : 1
+                    }   
+                }
+            }      
+        )        
+        mrgl_uuid = resp['return'].strip('{}').lower()
+        
+        return True, mrgl_uuid
+    except Fault as err:
+        return False, err
+    except Exception as err:
+        return False, err
+
+def BuildRouteGroups(conn, AbbreviatedCluster, Carrier):
+    try:
+        resp = conn.addRouteGroup(
+            routeGroup = {
+                'name' : f"SBC_{AbbreviatedCluster}_{Carrier}_RG",
+                'distributionAlgorithm' : "Circular",
+                'members' : {
+                    'member' : {
+                        'deviceSelectionOrder' : 1,
+                        'deviceName' : "SIPTrunktoCUP",
+                        'port' : 1
+                    }   
+                }
+            }      
+        )        
+        routegroup_uuid = resp['return'].strip('{}').lower()
+        
+        return True, routegroup_uuid
+    except Fault as err:
+        return False, err
+    except Exception as err:
+        return False, err
+   
+def BuildDevicePool(conn, SiteCode, AbbreviatedCluster, CMRG, TZ, StandardLRG = None):
     try: 
         resp = conn.addDevicePool(
             devicePool = {
-                "name" : f"{SiteCode}_{AbbrevCluster}_DP1",
+                "name" : f"{SiteCode}_{AbbreviatedCluster}_DP1",
                 "dateTimeSettingName" : TZ,
-                'callManagerGroupName' : f"{AbbrevCluster}_CMRG_{CMRG}",
-                'mediaResourceListName' : f'{SiteCode}_{AbbrevCluster}_MRGL',
-                'regionName' : f'{SiteCode}_{AbbrevCluster}_R',
+                'callManagerGroupName' : f"{AbbreviatedCluster}_CMRG_{CMRG}",
+                'mediaResourceListName' : f'{SiteCode}_{AbbreviatedCluster}_MRGL',
+                'regionName' : f'{SiteCode}_{AbbreviatedCluster}_R',
                 'srstName' : 'Disable',
-                'locationName' : f'{SiteCode}_{AbbrevCluster}_L'
+                'locationName' : f'{SiteCode}_{AbbreviatedCluster}_L'
             }
         )
         devicepool_uuid = resp['return'].strip('{}').lower()
@@ -233,4 +347,164 @@ def setStandardLRG(conn, DevicePoolUUID, RouteGroup):
     
         return True, ""
     except Fault as err:
+        return False, err
+
+def BuildPartitions(conn, PartitionDict):
+    try:
+        for partition in PartitionDict:
+            resp = conn.addRoutePartition(
+                routePartition = {
+                    'name' : f"{partition}",
+                    'description' : f"{PartitionDict[partition]}"
+                }
+            )
+                
+        return True, resp['return'].strip('{}').lower()
+    except Fault as err:
+        return False, err
+    except Exception as err:
+        return False, err
+
+def BuildCSS(conn, CssDict, MemberListofList):
+    try:
+        for CssKeyList, MemberList in zip(CssDict.items(), MemberListofList):
+            CssMemberList = []
+            for i, member in enumerate(MemberList):
+                CssMemberList.append(
+                    {
+                        'routePartitionName' : member,
+                        'index' : i+1
+                    }
+                )
+            CssAddDict = {
+                'name' : CssKeyList[0],
+                'description' : f"{CssDict[CssKeyList[0]]}"
+            }
+            CssAddDict.update({'members' : {'member' : CssMemberList}})
+            resp = conn.addCss(css = CssAddDict)
+
+        return True, resp['return'].strip('{}').lower()
+    except Fault as err:
+        print(err)
+    except Exception as err:
+        print(err)
+
+# NEED TO BUILD THE ADDITIONAL PARAMETERS AND ALSO CONVERT TO USE LISTS/DICTIONARIES TO HANDLE 5DIGIT, +e164, AND 9. PATTERNS
+def BuildTransPatterns(conn, SiteCode, AbbreviatedCluster, DNRange):
+    try:
+        Pattern = "5XXXX"# DN Range Calculation goes here
+        prefixDigits = "111114"
+        resp = conn.addTransPattern(
+            transPattern = {
+                'pattern' : Pattern,
+                'description' : f"{SiteCode} Incoming for {DNRange}",
+                'usage' : 'Translation',
+                'routePartitionName' : f"{SiteCode}_{AbbreviatedCluster}_Trans_PT",
+                'useCallingPartyPhoneMask' : "On",
+                'patternUrgency' : True,
+                'prefixDigitsOut' : prefixDigits,#string
+                'provideOutsideDialtone' : False,
+                'callingSearchSpaceName' : f"{SiteCode}_{AbbreviatedCluster}_Trans_CSS"
+            }
+        )
+        gatewayuuid = resp['return'].strip('{}').lower()
+            
+        return True, gatewayuuid
+    except Fault as err:
+        return False, err
+    except Exception as err:
+        return False, err
+
+def createAnalogGateway(conn, SiteCode, AbbreviatedCluster, CMRG, VGType, VGQuantity, MdfFloor):
+    try:
+        unit = 'ANALOG'
+        subunit = '4FXS-MGCP'
+        if VGType == 'VG310':
+            unit = 'VG-2VWIC-MBRD'
+            subunit = '24FXS'
+        for count in range(1,int(VGQuantity) + 1):
+            resp = conn.addGateway(
+                gateway = {
+                    'domainName' : f"vgc{SiteCode}a0{MdfFloor}a0{count}.uhc.com",
+                    'description' : f"{SiteCode}_{AbbreviatedCluster}_{VGType}_GW{count}",
+                    'product' : VGType,
+                    'protocol' : 'MGCP',
+                    'callManagerGroupName' : CMRG,
+                    'units' : {
+                        'unit' : {
+                            'index' : 0,
+                            'product' : unit,
+                            'subunits' : {
+                                'subunit' : {
+                                    'index' : 0,
+                                    'product' : subunit
+                                }
+
+                            }
+                        }
+                    }
+                }
+            )
+        gatewayuuid = resp['return'].strip('{}').lower()
+            
+        return True, gatewayuuid
+    except Fault as err:
+        return False, err
+    except Exception as err:
+        return False, err
+
+def buildTransformations(conn, SiteCode, AbbreviatedCluster, PatternList, Carrier, DiscardType, TransformMask, Prefix):
+    try:
+        for Pattern in PatternList:
+            resp = conn.addCallingPartyTransformationPattern(
+                callingPartyTransformationPattern = {
+                    'pattern' : Pattern,
+                    'description' : f"{SiteCode} SBC Outbound ANI", #Update this
+                    'routePartitionName' : "Global Learned E164 Numbers",# f"SBC_{AbbreviatedCluster}_{CarrierAbbr}_Outbound_ANI_xform_PT", #Update this
+                    'digitDiscardInstructionName' : DiscardType,
+                    'callingPartyTransformationMask' : TransformMask,
+                    'callingPartyPrefixDigits' : Prefix
+                }
+            )
+            transforminfo = resp['return'].strip('{}').lower()
+                
+        return True, transforminfo
+    except Fault as err:
+        return False, err
+    except Exception as err:
+        return False, err
+
+def AddServiceProfile(conn, SiteCode, AbbreviatedCluster):
+    try:
+        if conn.Open():
+            resp = conn.getServiceProfile(name = f'AAA_{AbbreviatedCluster}_MAC_UCService_Profile')
+            serviceProfileDict = resp['return']['serviceProfile']
+
+            serviceProfileDict['name'] = f'{SiteCode}_{AbbreviatedCluster}_MAC_UCService_Profile'
+            serviceProfileDict['description'] = f'{SiteCode} {AbbreviatedCluster} MAC UCService Profile'
+
+            conn.addServiceProfile(serviceProfile = serviceProfileDict)
+            return True
+        else:
+            raise Exception("Error opening connection")
+    except Exception as err:
+        print(f'Exception {err}')
+        return False
+        
+def BuildCallPark(conn, SiteCode, AbbreviatedCluster):
+    try:
+        for callParkNum in range(0,4):
+            resp = conn.addCallPark(
+                routePartition = {
+                    'pattern' : f"896{callParkNum}X",
+                    'description' : f"{SiteCode} Call Park",
+                    'routePartitionName' : f"{SiteCode}_Park_PT",
+                    'callManagerName' : f"CM_hq-cucm-pub"
+                }
+            )
+                
+        return True, resp['return'].strip('{}').lower()
+    except Fault as err:
+        return False, err
+    except Exception as err:
         return False, err

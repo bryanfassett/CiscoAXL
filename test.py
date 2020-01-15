@@ -1,13 +1,9 @@
-import CiscoAXL
-from CiscoAXL import Site
+from connect import open_connection, show_history
+from zeep import Client
+from zeep.exceptions import Fault
+from zeep.plugins import HistoryPlugin
+from urllib3 import disable_warnings
+from urllib3.exceptions import InsecureRequestWarning
 
-print("Creating site")
-
-
-newsite = Site("TX999") # created an instance of the class
-newsite.TZ = "CMLocal"
-newsite.Carrier = "ATT"
-newsite.CallManagerGroup = "2A"
-newsite.CAC = 4444
-newsite.Build()
-
+disable_warnings(InsecureRequestWarning) # Disable warning output due to invalid certificate
+client, service, history = open_connection() # Open connection using connect.py

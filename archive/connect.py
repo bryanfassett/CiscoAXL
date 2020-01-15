@@ -20,7 +20,7 @@ def open_connection():
     #password = '012005'
     host = '10.10.20.1'
 
-    wsdl = r'file://C:/Users/bryan/Desktop/CiscoAXL/axlsqltoolkit/schema/current/AXLAPI.wsdl'
+    wsdl = r'file://C:/Users/kllyh/Documents/GitHub/CiscoAXL/axlsqltoolkit/schema/current/AXLAPI.wsdl'
     location = 'https://{host}:8443/axl/'.format(host=host)
     binding = "{http://www.cisco.com/AXLAPIService/}AXLAPIBinding"
 
