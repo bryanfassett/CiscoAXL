@@ -8,19 +8,24 @@ from requests.auth import HTTPBasicAuth
 from urllib3 import disable_warnings
 from urllib3.exceptions import InsecureRequestWarning
 from lxml import etree
+import os
 
 #
 # Config
 #
 
 RegionNamesList = ["SBC","BROADCAST"]
-WSDL = r'file://C:/Users/bryan/Desktop/CiscoAXL/axlsqltoolkit/schema/current/AXLAPI.wsdl'
+WSDL = r'\axlsqltoolkit\schema\current\AXLAPI.wsdl'
 
+
+#
+# Variables
+#
+WSDL = f"file:\\\{os.path.dirname(os.path.realpath(__file__))}{WSDL}"
 
 #
 # Classes
 #
-
 class AxlConnection:
     def __init__(self, wsdlpath):
         self.wsdl = wsdlpath
