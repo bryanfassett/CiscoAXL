@@ -1,10 +1,9 @@
-import CiscoAXL
-from CiscoAXL import Site
+import RING.lib.Site as Whatever
 
 print("Creating site")
 
 
-newsite = Site("TX999") # created an instance of the class
+newsite = Whatever.Site("TX999") # created an instance of the class
 newsite.TZ = "CMLocal"
 newsite.Carrier = "ATT"
 newsite.CallManagerGroup = "2A"

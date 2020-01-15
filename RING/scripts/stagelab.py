@@ -1,12 +1,14 @@
-from CiscoAXL import *
+import RING.conf as Config
+import RING.lib.AxlConnection as Axl
+import RING.func.Build as Build
 
 def stageRegions(ClusterNumber):
     try:
-        conn = AxlConnection(WSDL)
+        conn = Axl.Connection(Config.WSDL)
         if conn.Open():
             base_regions = ["BROADCAST_", "SBC_", "CONF_", "E911_", "IVR-QUEUE_", "MoH_", "ONNET_", "VM_", ""]
             for region in base_regions:
-                result, details = BuildRegion(conn.Service, f"{region}CL{ClusterNumber}_R", "", False)
+                result, details = Build.Region(conn.Service, f"{region}CL{ClusterNumber}_R", "", False)
                 if not result:
                     raise Exception(details)
 
@@ -19,9 +21,9 @@ def stageRegions(ClusterNumber):
 
 def stageLocations(ClusterNumber):
     try:
-        conn = AxlConnection(WSDL)
+        conn = Axl.Connection(Config.WSDL)
         if conn.Open():
-            result, details = BuildLocation(conn.Service, "E911", f"CL{ClusterNumber}", 999999, 384, False)
+            result, details = Build.Location(conn.Service, "E911", f"CL{ClusterNumber}", 999999, 384, False)
             if not result:
                 raise Exception(details)
             return True
