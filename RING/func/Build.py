@@ -187,7 +187,7 @@ def setStandardLRG(conn, DevicePoolUUID, RouteGroup):
     except Fault as err:
         return False, err
 
-def Partition(conn, PartitionDict):
+def Partitions(conn, PartitionDict):
     try:
         for partition in PartitionDict:
             resp = conn.addRoutePartition(
