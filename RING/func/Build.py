@@ -149,7 +149,7 @@ def DevicePool(conn, SiteCode, AbbrevCluster, CMRG, TZ, StandardLRG = None):
                 "name" : f"{SiteCode}_{AbbrevCluster}_DP1",
                 "dateTimeSettingName" : TZ,
                 'callManagerGroupName' : f"{AbbrevCluster}_CMRG_{CMRG}",
-                'mediaResourceListName' : f'{SiteCode}_{AbbrevCluster}_MRGL',
+                'mediaResourceListName' : f'RemoteSite_{AbbrevCluster}_MRGL',
                 'regionName' : f'{SiteCode}_{AbbrevCluster}_R',
                 'srstName' : 'Disable',
                 'locationName' : f'{SiteCode}_{AbbrevCluster}_L'
@@ -257,6 +257,8 @@ def AnalogGateway(conn, SiteCode, AbbreviatedCluster, CMRG, VGType, VGQuantity, 
         if VGType == 'VG310':
             unit = 'VG-2VWIC-MBRD'
             subunit = '24FXS'
+
+        gatewayuuid = ""
         for count in range(1,int(VGQuantity) + 1):
             resp = conn.addGateway(
                 gateway = {
@@ -264,7 +266,7 @@ def AnalogGateway(conn, SiteCode, AbbreviatedCluster, CMRG, VGType, VGQuantity, 
                     'description' : f"{SiteCode}_{AbbreviatedCluster}_{VGType}_GW{count}",
                     'product' : VGType,
                     'protocol' : 'MGCP',
-                    'callManagerGroupName' : CMRG,
+                    'callManagerGroupName' : f"{AbbreviatedCluster}_CMRG_{CMRG}",
                     'units' : {
                         'unit' : {
                             'index' : 0,
@@ -280,7 +282,7 @@ def AnalogGateway(conn, SiteCode, AbbreviatedCluster, CMRG, VGType, VGQuantity, 
                     }
                 }
             )
-        gatewayuuid = resp['return'].strip('{}').lower()
+            gatewayuuid = resp['return'].strip('{}').lower()
             
         return True, gatewayuuid
     except Fault as err:
@@ -288,6 +290,7 @@ def AnalogGateway(conn, SiteCode, AbbreviatedCluster, CMRG, VGType, VGQuantity, 
 
 def TransformationPattern(conn, SiteCode, AbbreviatedCluster, PatternList, Carrier, DiscardType, TransformMask, Prefix):
     try:
+        transforminfo = ""
         for Pattern in PatternList:
             resp = conn.addCallingPartyTransformationPattern(
                 callingPartyTransformationPattern = {
@@ -309,33 +312,32 @@ def TransformationPattern(conn, SiteCode, AbbreviatedCluster, PatternList, Carri
 
 def ServiceProfile(conn, SiteCode, AbbreviatedCluster):
     try:
-        if conn.Open():
-            resp = conn.getServiceProfile(name = f'AAA_{AbbreviatedCluster}_MAC_UCService_Profile')
-            serviceProfileDict = resp['return']['serviceProfile']
+        resp = conn.getServiceProfile(name = f'AAA_{AbbreviatedCluster}_MAC_UCService_Profile')
+        serviceProfileDict = resp['return']['serviceProfile']
 
-            serviceProfileDict['name'] = f'{SiteCode}_{AbbreviatedCluster}_MAC_UCService_Profile'
-            serviceProfileDict['description'] = f'{SiteCode} {AbbreviatedCluster} MAC UCService Profile'
+        serviceProfileDict['name'] = f'{SiteCode}_{AbbreviatedCluster}_MAC_UCService_Profile'
+        serviceProfileDict['description'] = f'{SiteCode} {AbbreviatedCluster} MAC UCService Profile'
 
-            conn.addServiceProfile(serviceProfile = serviceProfileDict)
-            return True
-        else:
-            raise Exception("Error opening connection")
-    except Exception as err:
+        conn.addServiceProfile(serviceProfile = serviceProfileDict)
+        return True
+    except (Fault,Exception) as err:
         print(f'Exception {err}')
         return False
         
 def CallPark(conn, SiteCode, AbbreviatedCluster):
     try:
+        callparkuuid = ""
         for callParkNum in range(0,4):
             resp = conn.addCallPark(
-                routePartition = {
+                callPark = {
                     'pattern' : f"896{callParkNum}X",
                     'description' : f"{SiteCode} Call Park",
                     'routePartitionName' : f"{SiteCode}_Park_PT",
-                    'callManagerName' : f"CM_hq-cucm-pub"
+                    'callManagerName' : f"CM_hq-cucm-pub" # TODO this should use the assigned CMRG
                 }
             )
+            callparkuuid = resp['return'].strip('{}').lower()
                 
-        return True, resp['return'].strip('{}').lower()
+        return True, callparkuuid
     except Fault as err:
         return False, err
